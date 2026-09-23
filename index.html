@@ -15,6 +15,8 @@
         <div id="nav-menus">
             <button onclick="showPage('guest-page')">Form Tamu</button>
             <button onclick="showPage('login-page')" id="btn-login-nav">Login Staff</button>
+            <button onclick="showPage('admin-page')" id="btn-admin-nav" style="display: none;">Dashboard Admin</button>
+            <button onclick="showPage('atasan-page')" id="btn-atasan-nav" style="display: none;">Dashboard Atasan</button>
             <button onclick="logout()" id="btn-logout" style="display: none;">Logout</button>
         </div>
     </nav>
@@ -49,31 +51,38 @@
         </div>
     </div>
 
-    <!-- HALAMAN LOGIN -->
+    <!-- HALAMAN LOGIN STAFF / ADMIN -->
     <div id="login-page" class="page">
         <div class="card">
             <h3>Login Staff / Admin</h3>
             <div id="login-step-1">
-                <input type="email" id="email" placeholder="Email" required>
-                <input type="password" id="password" placeholder="Password" required>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" placeholder="Email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
                 <button onclick="login()" class="btn-primary">Login</button>
             </div>
             
             <!-- STEP 2: 2FA Authentication -->
             <div id="login-step-2" style="display: none;">
                 <h4>Verifikasi 2FA</h4>
-                <p>Masukkan 6 digit kode dari aplikasi Authenticator Anda.</p>
-                <input type="text" id="totp-code" placeholder="123456" maxlength="6">
+                <p style="margin-bottom: 10px; font-size: 0.9em; color: #666;">Masukkan 6 digit kode dari aplikasi Authenticator Anda.</p>
+                <div class="form-group">
+                    <input type="text" id="totp-code" placeholder="123456" maxlength="6">
+                </div>
                 <button onclick="verify2FA()" class="btn-primary">Verifikasi</button>
             </div>
         </div>
     </div>
 
-    <!-- DASHBOARD ADMIN (Tambah Data Master) -->
+    <!-- DASHBOARD ADMIN (Tambah Data Master & Kelola Akun User) -->
     <div id="admin-page" class="page">
         <div class="card">
             <h3>Dashboard Admin</h3>
-            <p>Tambah Pilihan Instansi dan Orang Tujuan.</p>
             
             <div class="admin-grid">
                 <div>
@@ -87,6 +96,45 @@
                     <button onclick="tambahTujuan()">Tambah Orang</button>
                 </div>
             </div>
+
+            <hr style="margin: 25px 0;">
+
+            <!-- OTORISASI PENAMBAHAN AKUN -->
+            <h3>Manajemen Akun Staff & Atasan</h3>
+            <form id="form-tambah-user" style="margin-bottom: 20px;">
+                <div class="form-group">
+                    <label>Email User Baru</label>
+                    <input type="email" id="new-user-email" placeholder="user@domain.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password Temporary</label>
+                    <input type="password" id="new-user-password" placeholder="Minimal 6 karakter" required>
+                </div>
+                <div class="form-group">
+                    <label>Role / Otorisasi</label>
+                    <select id="new-user-role" required>
+                        <option value="atasan">Atasan (Approval)</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="button" onclick="tambahUserBaru()" class="btn-primary">Buat Akun Baru</button>
+            </form>
+
+            <!-- DAFTAR USER DAN RESET 2FA -->
+            <h4>Daftar User & Reset 2FA</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status 2FA</th>
+                        <th>Aksi Reset</th>
+                    </tr>
+                </thead>
+                <tbody id="user-list">
+                    <!-- Data user akan di-render di sini -->
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -106,7 +154,7 @@
                     </tr>
                 </thead>
                 <tbody id="approval-list">
-                    <!-- Data will be loaded here -->
+                    <!-- Data akan dirender di sini -->
                 </tbody>
             </table>
         </div>

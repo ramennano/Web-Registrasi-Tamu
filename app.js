@@ -1,7 +1,7 @@
 // --- 1. KONFIGURASI SUPABASE ---
 // Ganti dengan URL dan ANON KEY milik Anda dari Supabase Dashboard
-const supabaseUrl = 'https://ojlpeqhstbsuzjqccjgk.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qbHBlcWhzdGJzdXpqcWNjamdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNjExNTcsImV4cCI6MjEwNTczNzE1N30.hMoVGhKUBUlcktrWhsBaOk5A673irsAsYn_iMdOJKjw';
+const supabaseUrl = 'https://gyortxfcoifxzrwfogzr.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // --- KREDENSIAL ADMIN DEFAULT & 2FA (Hanya untuk keperluan demo klien) ---

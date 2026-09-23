@@ -3,135 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Buku Tamu Digital</title>
+    <title>Registrasi Tamu Perusahaan</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Supabase JS CDN -->
+    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+    <header>
+        <h1>Sistem Buku Tamu</h1>
+        <button id="btnOpenLogin">Login Admin</button>
+    </header>
 
-    <nav>
-        <h2>Buku Tamu</h2>
-        <div id="nav-menus">
-            <button onclick="showPage('guest-page')">Form Tamu</button>
-            <button onclick="showPage('login-page')" id="btn-login-nav">Login Staff</button>
-            <button onclick="logout()" id="btn-logout" style="display: none;">Logout</button>
-        </div>
-    </nav>
-
-    <!-- HALAMAN REGISTRASI TAMU -->
-    <div id="guest-page" class="page active">
-        <div class="card">
-            <h3>Registrasi Tamu Masuk</h3>
-            <form id="form-tamu">
-                <div class="form-group">
-                    <label>Nama Tamu</label>
-                    <input type="text" id="nama_tamu" required placeholder="Masukkan nama Anda">
+    <main>
+        <section class="card">
+            <h2>Form Registrasi Tamu</h2>
+            <form id="visitorForm">
+                <div class="input-group">
+                    <label for="name">Nama Lengkap</label>
+                    <input type="text" id="name" required>
                 </div>
-                <div class="form-group">
-                    <label>Instansi / Perusahaan</label>
-                    <select id="instansi_id" required>
-                        <option value="">-- Pilih Instansi --</option>
-                    </select>
+                <div class="input-group">
+                    <label for="company">Asal Instansi/Perusahaan</label>
+                    <input type="text" id="company" required>
                 </div>
-                <div class="form-group">
-                    <label>Orang Yang Dituju</label>
-                    <select id="tujuan_id" required>
-                        <option value="">-- Pilih Tujuan --</option>
-                    </select>
+                <div class="input-group">
+                    <label for="purpose">Tujuan Kunjungan</label>
+                    <textarea id="purpose" rows="3" required></textarea>
                 </div>
-                <div class="form-group">
-                    <label>Keperluan</label>
-                    <textarea id="keperluan" required></textarea>
-                </div>
-                <button type="submit" class="btn-primary">Kirim Registrasi</button>
+                <button type="submit" id="btnSubmitVisitor">Daftar Sekarang</button>
             </form>
-        </div>
-    </div>
+            <p id="visitorMessage" class="message"></p>
+        </section>
+    </main>
 
-    <!-- HALAMAN LOGIN -->
-    <div id="login-page" class="page">
-        <div class="card">
-            <h3>Login Akses Admin / Staff</h3>
-            <div id="login-step-1">
-                <input type="email" id="email" placeholder="Email Akun" required>
-                <input type="password" id="password" placeholder="Password" required>
-                <button onclick="login()" class="btn-primary">Login</button>
-            </div>
+    <!-- Modal Login Admin -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeLogin">&times;</span>
+            <h2 id="modalTitle">Login Admin</h2>
             
-            <!-- STEP 2: 2FA Authentication -->
-            <div id="login-step-2" style="display: none;">
-                <h4>Verifikasi 2FA</h4>
-                <p>Masukkan 6 digit kode dari aplikasi Authenticator Anda.</p>
-                <input type="text" id="totp-code" placeholder="123456" maxlength="6">
-                <button onclick="verify2FA()" class="btn-primary">Verifikasi</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- DASHBOARD ADMIN -->
-    <div id="admin-page" class="page">
-        <div class="card">
-            <h3>Dashboard Admin</h3>
-            <p>Manajemen Sistem, Akun, dan Data Master.</p>
-            
-            <div class="admin-grid">
-                <!-- Data Master -->
-                <div class="card-inner">
-                    <h4>Tambah Instansi</h4>
-                    <input type="text" id="new-instansi" placeholder="Nama Instansi Baru">
-                    <button onclick="tambahInstansi()">Tambah Instansi</button>
+            <!-- Step 1: Username & Password -->
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required>
                 </div>
-                <div class="card-inner">
-                    <h4>Tambah Orang Tujuan</h4>
-                    <input type="text" id="new-tujuan" placeholder="Nama Orang Baru">
-                    <button onclick="tambahTujuan()">Tambah Orang</button>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
                 </div>
+                <button type="submit">Lanjut</button>
+                <p class="hint">Demo Username: admin | Pass: admin123</p>
+            </form>
 
-                <!-- Manajemen Akun (Otorisasi) -->
-                <div class="card-inner">
-                    <h4>Tambah Akun / Otorisasi</h4>
-                    <input type="email" id="new-user-email" placeholder="Email Akun Baru">
-                    <input type="password" id="new-user-password" placeholder="Password">
-                    <select id="new-user-role" style="margin-bottom: 15px; width: 100%; padding: 10px; border-radius:5px;">
-                        <option value="atasan">Atasan</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                    <button onclick="tambahAkun()" class="btn-primary">Buat Akun</button>
+            <!-- Step 2: 2FA (Disembunyikan pada awalnya) -->
+            <form id="twoFaForm" style="display: none;">
+                <p>Masukkan 6 digit kode 2FA dari aplikasi Authenticator Anda.</p>
+                <div class="input-group">
+                    <label for="twoFaCode">Kode 2FA</label>
+                    <input type="text" id="twoFaCode" maxlength="6" required>
                 </div>
-
-                <!-- Reset 2FA -->
-                <div class="card-inner">
-                    <h4>Reset 2FA User</h4>
-                    <p style="font-size: 13px; margin-bottom: 10px;">Gunakan ini jika user kehilangan akses Authenticator.</p>
-                    <input type="email" id="reset-mfa-email" placeholder="Email User Target">
-                    <button onclick="reset2FA()" class="btn-danger">Reset 2FA</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- DASHBOARD ATASAN (Approval) -->
-    <div id="atasan-page" class="page">
-        <div class="card">
-            <h3>Dashboard Atasan (Approval Tamu)</h3>
-            <div style="overflow-x:auto;">
-                <table class="table" id="table-approval">
-                    <thead>
-                        <tr>
-                            <th>Waktu</th>
-                            <th>Nama Tamu</th>
-                            <th>Instansi</th>
-                            <th>Keperluan</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="approval-list">
-                        <!-- Data will be loaded here -->
-                    </tbody>
-                </table>
-            </div>
+                <button type="submit">Verifikasi & Login</button>
+                <p class="hint">Demo 2FA Kode: 123456</p>
+            </form>
+            <p id="loginMessage" class="message error"></p>
         </div>
     </div>
 

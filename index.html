@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Buku Tamu Digital</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -58,59 +59,60 @@
                 <button onclick="login()" class="btn-primary">Login</button>
             </div>
             
+            <!-- STEP 2: 2FA Authentication -->
             <div id="login-step-2" style="display: none;">
                 <h4>Verifikasi 2FA</h4>
-                <p>Masukkan 6 digit kode dari aplikasi Authenticator Anda.</p>
+                <p style="margin-bottom: 10px;">Masukkan 6 digit kode dari aplikasi Authenticator Anda.</p>
                 <input type="text" id="totp-code" placeholder="123456" maxlength="6">
                 <button onclick="verify2FA()" class="btn-primary">Verifikasi</button>
+                <button onclick="cancel2FA()" class="btn-secondary" style="margin-top: 10px; width: 100%;">Kembali</button>
             </div>
         </div>
     </div>
 
-    <!-- DASHBOARD ADMIN -->
+    <!-- DASHBOARD ADMIN (Data Master & Otorisasi) -->
     <div id="admin-page" class="page">
         <div class="card">
             <h3>Dashboard Admin</h3>
+            <p>Tambah Pilihan Instansi dan Orang Tujuan.</p>
             
-            <h4 class="section-title">Manajemen Data Master</h4>
-            <div class="admin-grid">
+            <div class="admin-grid" style="margin-bottom: 30px;">
                 <div>
-                    <label>Tambah Instansi</label>
+                    <h4>Tambah Instansi</h4>
                     <input type="text" id="new-instansi" placeholder="Nama Instansi Baru">
-                    <button onclick="tambahInstansi()" class="btn-primary">Tambah Instansi</button>
+                    <button onclick="tambahInstansi()">Tambah Instansi</button>
                 </div>
                 <div>
-                    <label>Tambah Orang Tujuan</label>
+                    <h4>Tambah Orang Tujuan</h4>
                     <input type="text" id="new-tujuan" placeholder="Nama Orang Baru">
-                    <button onclick="tambahTujuan()" class="btn-primary">Tambah Orang</button>
+                    <button onclick="tambahTujuan()">Tambah Orang</button>
                 </div>
             </div>
 
-            <hr style="margin: 30px 0; border-top: 1px solid #ddd;">
-
-            <h4 class="section-title">Manajemen Akun (Otorisasi Admin)</h4>
+            <!-- BAGIAN BARU: MANAJEMEN PENGGUNA -->
+            <h3 style="border-top: 1px solid #ddd; padding-top: 20px;">Manajemen Pengguna (Otorisasi)</h3>
             <div class="admin-grid">
                 <div>
-                    <label>Tambah Akun (Staff/Atasan)</label>
+                    <h4>Tambah Akun Staff/Atasan</h4>
                     <input type="email" id="new-user-email" placeholder="Email Akun Baru">
-                    <input type="password" id="new-user-password" placeholder="Password Akun">
-                    <select id="new-user-role" style="margin-bottom: 15px;">
-                        <option value="admin">Admin</option>
+                    <input type="password" id="new-user-password" placeholder="Password (Min. 6 Karakter)">
+                    <select id="new-user-role" style="width:100%; padding:10px; margin-bottom:15px; border-radius:5px; border:1px solid #ccc;">
                         <option value="atasan">Atasan</option>
-                        <option value="staff">Staff</option>
+                        <option value="admin">Admin</option>
                     </select>
-                    <button onclick="tambahAkun()" class="btn-primary">Buat Akun</button>
+                    <button onclick="tambahAkunStaff()">Buat Akun</button>
                 </div>
                 <div>
-                    <label>Reset 2FA Pengguna</label>
-                    <input type="email" id="reset-2fa-email" placeholder="Email Pengguna">
-                    <button onclick="adminReset2FA()" class="btn-danger">Reset 2FA Akun</button>
+                    <h4>Reset 2FA User</h4>
+                    <p style="font-size: 13px; margin-bottom:10px; color:#555;">Masukkan <strong>User ID (UUID)</strong> pengguna yang kehilangan akses 2FA untuk menghapus otentikasi mereka.</p>
+                    <input type="text" id="reset-user-id" placeholder="Masukkan User ID (UUID)">
+                    <button style="background:#e74c3c;" onclick="resetUser2FA()">Reset 2FA User</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- DASHBOARD ATASAN -->
+    <!-- DASHBOARD ATASAN (Approval) -->
     <div id="atasan-page" class="page">
         <div class="card">
             <h3>Dashboard Atasan (Approval Tamu)</h3>
@@ -126,6 +128,7 @@
                     </tr>
                 </thead>
                 <tbody id="approval-list">
+                    <!-- Data will be loaded here -->
                 </tbody>
             </table>
         </div>

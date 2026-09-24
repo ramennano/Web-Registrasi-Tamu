@@ -3,68 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrasi Tamu Perusahaan</title>
+    <title>Registrasi Tamu & Portal Akses Perusahaan</title>
     <link rel="stylesheet" href="style.css">
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <header>
-        <h1>Sistem Buku Tamu</h1>
-        <button id="btnOpenLogin">Login Admin</button>
+        <h1>Sistem Registrasi & Akses Tamu</h1>
+        <button id="btnOpenLogin" class="btn-secondary">Login Admin</button>
     </header>
 
     <main>
         <section class="card">
-            <h2>Form Registrasi Tamu</h2>
+            <h2>Form Permohonan Akses Tamu</h2>
+            <p class="card-subtitle">Silakan isi data diri untuk mengajukan kunjungan dan akses fasilitas perusahaan.</p>
+            
             <form id="visitorForm">
                 <div class="input-group">
                     <label for="name">Nama Lengkap</label>
-                    <input type="text" id="name" required>
+                    <input type="text" id="name" placeholder="Masukkan nama lengkap" required>
                 </div>
                 <div class="input-group">
-                    <label for="company">Asal Instansi/Perusahaan</label>
-                    <input type="text" id="company" required>
+                    <label for="company">Asal Instansi / Perusahaan</label>
+                    <input type="text" id="company" placeholder="Contoh: PT Mitra Solusi" required>
                 </div>
                 <div class="input-group">
-                    <label for="purpose">Tujuan Kunjungan</label>
-                    <textarea id="purpose" rows="3" required></textarea>
+                    <label for="host">Bertemu Dengan (Host / Karyawan)</label>
+                    <input type="text" id="host" placeholder="Contoh: Bpk. Budi (IT Dept)" required>
                 </div>
-                <button type="submit" id="btnSubmitVisitor">Daftar Sekarang</button>
+                <div class="input-group">
+                    <label for="purpose">Keperluan / Tujuan</label>
+                    <textarea id="purpose" rows="3" placeholder="Jelaskan tujuan kunjungan Anda" required></textarea>
+                </div>
+                <button type="submit" id="btnSubmitVisitor">Kirim Permohonan Akses</button>
             </form>
             <p id="visitorMessage" class="message"></p>
         </section>
     </main>
 
-    <!-- Modal Login Admin -->
+    <!-- Modal Login Admin & 2FA -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close" id="closeLogin">&times;</span>
             <h2 id="modalTitle">Login Admin</h2>
             
-            <!-- Step 1: Username & Password -->
+            <!-- Step 1: Login Admin Default -->
             <form id="loginForm">
                 <div class="input-group">
                     <label for="username">Username / Email</label>
-                    <input type="text" id="username" required>
+                    <input type="text" id="username" placeholder="admin" required>
                 </div>
                 <div class="input-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" required>
+                    <input type="password" id="password" placeholder="••••••••" required>
                 </div>
                 <button type="submit" id="btnLoginSubmit">Lanjut ke 2FA</button>
-                <p class="hint">Default User: admin | Pass: admin123</p>
+                <p class="hint">Default User: <strong>admin</strong> | Pass: <strong>admin123</strong></p>
             </form>
 
-            <!-- Step 2: 2FA Security -->
+            <!-- Step 2: Verifikasi 2FA -->
             <form id="twoFaForm" style="display: none;">
-                <p>Masukkan 6 digit kode keamanan 2FA Anda.</p>
+                <p class="hint-2fa">Masukkan 6 digit kode keamanan 2FA yang dikirimkan.</p>
                 <div class="input-group">
-                    <label for="twoFaCode">Kode 2FA (OTP)</label>
+                    <label for="twoFaCode">Kode Verifikasi 2FA</label>
                     <input type="text" id="twoFaCode" maxlength="6" placeholder="123456" required>
                 </div>
-                <button type="submit" id="btnVerify2FA">Verifikasi & Masuk</button>
-                <p class="hint">Demo Kode 2FA: 123456</p>
+                <button type="submit" id="btnVerify2FA">Verifikasi & Masuk Dashboard</button>
+                <p class="hint">Kode Demo 2FA: <strong>123456</strong></p>
             </form>
             <p id="loginMessage" class="message error"></p>
         </div>

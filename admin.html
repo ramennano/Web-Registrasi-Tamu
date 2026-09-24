@@ -3,33 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Buku Tamu</title>
+    <title>Admin Dashboard - Persetujuan Akses Tamu</title>
     <link rel="stylesheet" href="style.css">
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <header>
-        <h1>Dashboard Admin</h1>
-        <button id="btnLogout" class="btn-danger">Logout</button>
+        <h1>Dashboard Panel Admin</h1>
+        <button id="btnLogout" class="btn-danger">Logout Admin</button>
     </header>
 
-    <main>
+    <main class="main-admin">
         <section class="card admin-card">
-            <h2>Daftar Kunjungan Tamu</h2>
+            <h2>Kelola Permohonan & Akses Tamu</h2>
+            <p class="card-subtitle">Berikan atau cabut izin akses web/gedung perusahaan untuk tamu yang mendaftar.</p>
+            
             <div class="table-responsive">
                 <table id="visitorsTable">
                     <thead>
                         <tr>
-                            <th>Tanggal & Waktu</th>
-                            <th>Nama</th>
-                            <th>Asal Perusahaan</th>
-                            <th>Tujuan</th>
+                            <th>Waktu Daftar</th>
+                            <th>Nama & Perusahaan</th>
+                            <th>Host / Tujuan</th>
+                            <th>Status Akses</th>
+                            <th>Aksi Admin</th>
                         </tr>
                     </thead>
                     <tbody id="visitorsTableBody">
                         <tr>
-                            <td colspan="4" style="text-align: center;">Memuat data...</td>
+                            <td colspan="5" style="text-align: center;">Memuat data tamu...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -37,6 +40,6 @@
         </section>
     </main>
 
-    <script src="app.js"></script>
+    <script src="admin.js"></script>
 </body>
 </html>

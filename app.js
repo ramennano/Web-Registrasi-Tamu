@@ -1,17 +1,195 @@
 // ==========================================
-// KONFIGURASI SUPABASE (ISIKAN URL & ANON KEY ANDA)
+// KONFIGURASI SUPABASE (OPSIONAL / SINKRONISASI LOKAL)
+// Hapus konfigurasi hardcoded lama. Ganti dengan nilai milik Anda bila menggunakan cloud Supabase.
 // ==========================================
-const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co'; // Masukkan Supabase URL Anda
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU'; // Masukkan Supabase Anon Key Anda
+const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co'; 
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU';
 
-// Inisialisasi Klien Supabase
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabaseClient = null;
+if (typeof supabase !== 'undefined' && SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
 
-let currentUser = null;
-let guestRealtimeChannel = null;
+// Master Key untuk Reset Password (Dapat diubah)
+const MASTER_SECURITY_KEY = "MASTER123";
 
 // ==========================================
-// FUNGSI NAVIGASI HALAMAN
+// MOCK DATASTORE (LOKAL JIKA SUPABASE OFF)
+// ==========================================
+let currentLang = 'id';
+let currentAdminUser = null;
+
+let localGuests = JSON.parse(localStorage.getItem('guests_db')) || [
+    {
+        id: 'GST-1001',
+        nama: 'Budi Santoso',
+        jenis_id: 'KTP',
+        nomor_id: '3171012304950001',
+        instansi: 'PT Teknologi Bangsa',
+        keperluan: 'Audit Sistem',
+        status: 'Diberikan Akses',
+        created_at: new Date().toISOString()
+    }
+];
+
+let localCompanies = JSON.parse(localStorage.getItem('companies_db')) || [
+    'PT Bangun Bangsa',
+    'PT Teknologi Nusantara',
+    'CV Maju Bersama'
+];
+
+let localAdmins = JSON.parse(localStorage.getItem('admins_db')) || [
+    { username: 'admin', password: 'admin123', nama: 'Admin Bawaan' }
+];
+
+function saveLocalData() {
+    localStorage.setItem('guests_db', JSON.stringify(localGuests));
+    localStorage.setItem('companies_db', JSON.stringify(localCompanies));
+    localStorage.setItem('admins_db', JSON.stringify(localAdmins));
+}
+
+// ==========================================
+// DICTIONARY MULTIBAHASA (ID & EN)
+// ==========================================
+const i18n = {
+    id: {
+        navHome: "Beranda",
+        navCheckStatus: "Cek Status Tamu",
+        navAdminLogin: "Login Admin",
+        navLogout: "Logout",
+        heroTitle: "Selamat Datang di Portal Tamu Perusahaan",
+        heroSubtitle: "Silakan daftarkan kunjungan Anda untuk mendapatkan izin akses kunjungan.",
+        btnGetStarted: "Get Started / Mulai Registrasi",
+        regFormTitle: "Form Registrasi Tamu",
+        regFormDesc: "Isi data diri Anda dengan lengkap. Kode ID Tamu akan diberikan setelah Anda mengirimkan form.",
+        lblFullName: "Nama Lengkap",
+        lblIdType: "Jenis ID Pengenal",
+        lblIdNumber: "Nomor ID / Identitas",
+        lblCompany: "Asal Instansi / Perusahaan",
+        optSelectCompany: "-- Pilih Perusahaan Terdaftar --",
+        optOtherCompany: "-- Input Manual / Lainnya --",
+        lblManualCompany: "Nama Instansi/PT Manual",
+        lblPurpose: "Keperluan Kunjungan",
+        btnSubmitReg: "Kirim Permintaan Akses",
+        statusPageTitle: "Cek Status & Dashboard Tamu",
+        statusPageDesc: "Masukkan ID Tamu Anda yang didapatkan saat pendaftaran untuk mengecek persetujuan akses.",
+        btnCheckStatus: "Cek Status",
+        lblGuestId: "ID Tamu",
+        lblStatus: "Status Persetujuan",
+        adminLoginTitle: "Login Administrator",
+        adminLoginDesc: "Login menggunakan Username/ID Admin dan Password.",
+        lblUsername: "Username / ID Admin",
+        lblPassword: "Password",
+        btnLogin: "Login Admin",
+        linkForgotPassword: "Lupa Password / Reset Password?",
+        resetTitle: "Reset Password Admin",
+        resetDesc: "Masukkan Username Admin dan Kunci Keamanan / Master Key untuk menyetel ulang password Anda.",
+        lblMasterKey: "Master Key / Security Code",
+        lblNewPassword: "Password Baru",
+        btnResetPassword: "Setel Ulang Password",
+        btnBackToLogin: "Kembali ke Login",
+        adminDashTitle: "Dashboard Administrasi",
+        tabGuestApproval: "Persetujuan Tamu",
+        tabAddAdmin: "Tambah Akun Admin",
+        tabManagePT: "Kelola PT Terdaftar",
+        guestListTitle: "Daftar Permintaan Akses Tamu",
+        thTime: "Waktu",
+        thName: "Nama",
+        thIdType: "Jenis ID",
+        thCompany: "Instansi/PT",
+        thPurpose: "Keperluan",
+        thStatus: "Status",
+        thAction: "Aksi",
+        addAdminTitle: "Buat Akun Login Admin Baru (Tanpa Registrasi Email)",
+        btnAddAdmin: "Buat Akun Admin",
+        managePtTitle: "Kelola Daftar Perusahaan (PT) yang Disetujui",
+        lblPtName: "Nama PT / Instansi Baru",
+        btnAddPt: "Tambah PT ke Daftar",
+        statusPending: "Menunggu Persetujuan",
+        statusApproved: "Diberikan Akses",
+        statusRejected: "Akses Ditolak",
+        notifApproved: "AKSES DISETUJUI! Anda diperbolehkan masuk ke area perusahaan.",
+        notifPending: "MENUNGGU PERSATUAN. Permintaan akses Anda sedang ditinjau admin.",
+        notifRejected: "AKSES DITOLAK. Maaf, kunjungan Anda belum diizinkan."
+    },
+    en: {
+        navHome: "Home",
+        navCheckStatus: "Check Guest Status",
+        navAdminLogin: "Admin Login",
+        navLogout: "Logout",
+        heroTitle: "Welcome to Corporate Guest Portal",
+        heroSubtitle: "Please register your visit to obtain entrance approval.",
+        btnGetStarted: "Get Started / Register Now",
+        regFormTitle: "Guest Registration Form",
+        regFormDesc: "Fill in your complete details. A Guest ID code will be provided after submitting.",
+        lblFullName: "Full Name",
+        lblIdType: "ID Type",
+        lblIdNumber: "ID / Identity Number",
+        lblCompany: "Company / Institution",
+        optSelectCompany: "-- Select Approved Company --",
+        optOtherCompany: "-- Manual Input / Other --",
+        lblManualCompany: "Manual Company Name",
+        lblPurpose: "Purpose of Visit",
+        btnSubmitReg: "Submit Access Request",
+        statusPageTitle: "Check Status & Guest Dashboard",
+        statusPageDesc: "Enter your Guest ID obtained during registration to check approval status.",
+        btnCheckStatus: "Check Status",
+        lblGuestId: "Guest ID",
+        lblStatus: "Approval Status",
+        adminLoginTitle: "Administrator Login",
+        adminLoginDesc: "Log in using Admin Username/ID and Password.",
+        lblUsername: "Username / Admin ID",
+        lblPassword: "Password",
+        btnLogin: "Admin Login",
+        linkForgotPassword: "Forgot / Reset Password?",
+        resetTitle: "Reset Admin Password",
+        resetDesc: "Enter Admin Username and Master Key to reset your password.",
+        lblMasterKey: "Master Key / Security Code",
+        lblNewPassword: "New Password",
+        btnResetPassword: "Reset Password",
+        btnBackToLogin: "Back to Login",
+        adminDashTitle: "Admin Dashboard",
+        tabGuestApproval: "Guest Approval",
+        tabAddAdmin: "Add Admin Account",
+        tabManagePT: "Manage Approved PTs",
+        guestListTitle: "Guest Access Request List",
+        thTime: "Time",
+        thName: "Name",
+        thIdType: "ID Type",
+        thCompany: "Company",
+        thPurpose: "Purpose",
+        thStatus: "Status",
+        thAction: "Action",
+        addAdminTitle: "Create New Admin Account (No Email Registration Required)",
+        btnAddAdmin: "Create Admin Account",
+        managePtTitle: "Manage Approved Companies (PT)",
+        lblPtName: "New Company / PT Name",
+        btnAddPt: "Add PT to List",
+        statusPending: "Pending Approval",
+        statusApproved: "Access Granted",
+        statusRejected: "Access Denied",
+        notifApproved: "ACCESS GRANTED! You are allowed to enter the premises.",
+        notifPending: "PENDING APPROVAL. Your access request is currently under review.",
+        notifRejected: "ACCESS DENIED. Sorry, your visit has not been approved."
+    }
+};
+
+// Fungsi Ganti Bahasa
+function changeLanguage(lang) {
+    currentLang = lang;
+    document.getElementById('lang-id-btn').classList.toggle('active-lang', lang === 'id');
+    document.getElementById('lang-en-btn').classList.toggle('active-lang', lang === 'en');
+
+    document.querySelectorAll('[data-i18n]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n');
+        if (i18n[lang][key]) {
+            elem.textContent = i18n[lang][key];
+        }
+    });
+}
+
+// ==========================================
+// NAVIGASI HALAMAN & TABS
 // ==========================================
 function showPage(pageId) {
     document.querySelectorAll('.page-section').forEach(section => {
@@ -19,465 +197,273 @@ function showPage(pageId) {
     });
     document.getElementById(pageId).classList.add('active');
 
-    // Action per halaman
-    if (pageId === 'guest-page') {
-        loadApprovedCompaniesSelect();
-    } else if (pageId === 'admin-dashboard') {
+    if (pageId === 'admin-dashboard') {
         fetchGuestsAdmin();
-    } else if (pageId === 'company-manage-page') {
-        fetchApprovedCompaniesAdmin();
-    } else if (pageId === 'user-manage-page') {
-        fetchUsersAdmin();
+        renderCompanyList();
     }
 }
 
-// Cek Sesi Login Lokal (LocalStorage)
-function checkAuthStatus() {
-    const savedUser = localStorage.getItem('app_user_session');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        document.getElementById('nav-login-btn').style.display = 'none';
-        document.getElementById('admin-nav-group').style.display = 'inline';
+function switchAdminTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    event.target.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+}
+
+// Tampilkan / sembunyikan input manual PT
+function toggleManualCompany(val) {
+    const manualGroup = document.getElementById('manual-company-group');
+    if (val === 'MANUAL') {
+        manualGroup.style.display = 'block';
+        document.getElementById('guest-company-manual').required = true;
     } else {
-        currentUser = null;
-        document.getElementById('nav-login-btn').style.display = 'inline-block';
-        document.getElementById('admin-nav-group').style.display = 'none';
+        manualGroup.style.display = 'none';
+        document.getElementById('guest-company-manual').required = false;
     }
 }
 
+// Populate Dropdown PT
+function populateCompanyDropdown() {
+    const select = document.getElementById('guest-company-select');
+    // Hapus opsi yang lama kecuali yang paling atas dan MANUAL
+    select.innerHTML = `
+        <option value="" disabled selected data-i18n="optSelectCompany">${i18n[currentLang].optSelectCompany}</option>
+        <option value="MANUAL" data-i18n="optOtherCompany">${i18n[currentLang].optOtherCompany}</option>
+    `;
+
+    localCompanies.forEach(company => {
+        const opt = document.createElement('option');
+        opt.value = company;
+        opt.textContent = company;
+        select.insertBefore(opt, select.lastElementChild);
+    });
+}
+
 // ==========================================
-// LOGIKA AKUN & LOGIN (TANPA REGISTRASI EMAIL)
+// LOGIKA TAMU (REGISTRASI & STATUS)
 // ==========================================
-document.getElementById('login-form').addEventListener('submit', async (e) => {
+document.getElementById('guest-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    const usernameInput = document.getElementById('admin-username').value.trim();
-    const passwordInput = document.getElementById('admin-password').value.trim();
-    const messageDiv = document.getElementById('login-message');
 
-    // Query ke tabel app_users
-    const { data, error } = await supabaseClient
-        .from('app_users')
-        .select('*')
-        .eq('username', usernameInput)
-        .eq('password', passwordInput)
-        .single();
+    const name = document.getElementById('guest-name').value;
+    const idType = document.getElementById('guest-id-type').value;
+    const idNumber = document.getElementById('guest-id-number').value;
+    const companySelect = document.getElementById('guest-company-select').value;
+    const companyManual = document.getElementById('guest-company-manual').value;
+    const purpose = document.getElementById('guest-purpose').value;
+    
+    const finalCompany = (companySelect === 'MANUAL') ? companyManual : companySelect;
+    const newGuestId = 'GST-' + Math.floor(100000 + Math.random() * 900000);
 
-    if (error || !data) {
-        messageDiv.className = 'message error';
-        messageDiv.textContent = 'Username atau Password salah!';
-        messageDiv.style.display = 'block';
+    const newGuest = {
+        id: newGuestId,
+        nama: name,
+        jenis_id: idType,
+        nomor_id: idNumber,
+        instansi: finalCompany,
+        keperluan: purpose,
+        status: 'Menunggu Persetujuan',
+        created_at: new Date().toISOString()
+    };
+
+    localGuests.unshift(newGuest);
+    saveLocalData();
+
+    const msg = document.getElementById('guest-message');
+    msg.className = 'message success';
+    msg.innerHTML = `Registrasi Berhasil! Simpan ID Tamu Anda: <strong>${newGuestId}</strong>`;
+    
+    document.getElementById('guest-form').reset();
+    document.getElementById('manual-company-group').style.display = 'none';
+});
+
+function checkGuestStatus() {
+    const searchId = document.getElementById('search-guest-id').value.trim();
+    const guestCard = document.getElementById('guest-status-result');
+    const banner = document.getElementById('approval-notification-banner');
+
+    const guest = localGuests.find(g => g.id.toUpperCase() === searchId.toUpperCase());
+
+    if (!guest) {
+        alert('ID Tamu tidak ditemukan!');
+        guestCard.style.display = 'none';
+        return;
+    }
+
+    guestCard.style.display = 'block';
+    document.getElementById('res-guest-id').textContent = guest.id;
+    document.getElementById('res-guest-name').textContent = guest.nama;
+    document.getElementById('res-guest-company').textContent = guest.instansi;
+    document.getElementById('res-guest-purpose').textContent = guest.keperluan;
+    document.getElementById('res-guest-status').textContent = guest.status;
+
+    if (guest.status === 'Diberikan Akses') {
+        banner.className = 'notification-banner approved';
+        banner.textContent = i18n[currentLang].notifApproved;
+    } else if (guest.status === 'Akses Ditolak') {
+        banner.className = 'notification-banner rejected';
+        banner.textContent = i18n[currentLang].notifRejected;
     } else {
-        messageDiv.style.display = 'none';
-        localStorage.setItem('app_user_session', JSON.stringify(data));
-        checkAuthStatus();
+        banner.className = 'notification-banner pending';
+        banner.textContent = i18n[currentLang].notifPending;
+    }
+}
+
+// ==========================================
+// LOGIKA ADMIN & MANAJEMEN AKUN
+// ==========================================
+document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const user = document.getElementById('admin-username').value.trim();
+    const pass = document.getElementById('admin-password').value.trim();
+    const msg = document.getElementById('login-message');
+
+    const found = localAdmins.find(a => a.username === user && a.password === pass);
+
+    if (found) {
+        currentAdminUser = found;
+        msg.style.display = 'none';
+        document.getElementById('nav-login-btn').style.display = 'none';
+        document.getElementById('nav-logout-btn').style.display = 'inline-block';
         document.getElementById('login-form').reset();
         showPage('admin-dashboard');
+    } else {
+        msg.style.display = 'block';
+        msg.textContent = 'Username atau Password Admin salah!';
     }
 });
 
 function logoutAdmin() {
-    localStorage.removeItem('app_user_session');
-    checkAuthStatus();
-    showPage('guest-page');
+    currentAdminUser = null;
+    document.getElementById('nav-login-btn').style.display = 'inline-block';
+    document.getElementById('nav-logout-btn').style.display = 'none';
+    showPage('guest-landing');
 }
 
-// ==========================================
-// LOGIKA DAFTAR PT TERDAFTAR / MANUAL
-// ==========================================
-function toggleCompanyInput() {
-    const selectedOption = document.querySelector('input[name="company_option"]:checked').value;
-    const selectContainer = document.getElementById('company-select-container');
-    const manualContainer = document.getElementById('company-manual-container');
+// Fitur Reset Password
+document.getElementById('reset-password-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const username = document.getElementById('reset-username').value.trim();
+    const masterKey = document.getElementById('reset-master-key').value.trim();
+    const newPass = document.getElementById('reset-new-password').value.trim();
+    const msg = document.getElementById('reset-message');
 
-    if (selectedOption === 'terdaftar') {
-        selectContainer.style.display = 'block';
-        manualContainer.style.display = 'none';
-    } else {
-        selectContainer.style.display = 'none';
-        manualContainer.style.display = 'block';
-    }
-}
-
-async function loadApprovedCompaniesSelect() {
-    const selectEl = document.getElementById('guest-company-select');
-    selectEl.innerHTML = '<option value="">-- Memuat PT... --</option>';
-
-    const { data, error } = await supabaseClient
-        .from('approved_companies')
-        .select('*')
-        .order('nama_pt', { ascending: true });
-
-    if (error) {
-        selectEl.innerHTML = '<option value="">Gagal memuat PT</option>';
+    if (masterKey !== MASTER_SECURITY_KEY) {
+        msg.className = 'message error';
+        msg.textContent = 'Master Key / Security Code salah!';
         return;
     }
 
-    selectEl.innerHTML = '<option value="">-- Pilih Perusahaan --</option>';
-    data.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item.nama_pt;
-        option.textContent = item.nama_pt;
-        selectEl.appendChild(option);
-    });
-}
+    const adminIndex = localAdmins.findIndex(a => a.username === username);
+    if (adminIndex === -1) {
+        msg.className = 'message error';
+        msg.textContent = 'Username Admin tidak ditemukan!';
+        return;
+    }
 
-// ==========================================
-// LOGIKA BUKU TAMU (REGISTRASI TAMU)
-// ==========================================
-document.getElementById('guest-form').addEventListener('submit', async (e) => {
+    localAdmins[adminIndex].password = newPass;
+    saveLocalData();
+
+    msg.className = 'message success';
+    msg.textContent = 'Password berhasil direset! Silakan kembali ke halaman login.';
+    document.getElementById('reset-password-form').reset();
+});
+
+// Fitur Tambah Admin Baru (Tanpa Registrasi Email)
+document.getElementById('add-admin-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    
-    const name = document.getElementById('guest-name').value;
-    const idType = document.getElementById('guest-id-type').value;
-    const idNumber = document.getElementById('guest-id-number').value;
-    const companyOption = document.querySelector('input[name="company_option"]:checked').value;
-    
-    let companyName = '';
-    if (companyOption === 'terdaftar') {
-        companyName = document.getElementById('guest-company-select').value;
-        if (!companyName) {
-            alert('Silakan pilih PT dari daftar terdaftar!');
-            return;
-        }
-    } else {
-        companyName = document.getElementById('guest-company-manual').value;
-        if (!companyName) {
-            alert('Silakan isi nama instansi manual!');
-            return;
-        }
+    const username = document.getElementById('new-admin-username').value.trim();
+    const name = document.getElementById('new-admin-name').value.trim();
+    const password = document.getElementById('new-admin-password').value.trim();
+    const msg = document.getElementById('add-admin-message');
+
+    if (localAdmins.some(a => a.username === username)) {
+        msg.className = 'message error';
+        msg.textContent = 'Username admin sudah digunakan!';
+        return;
     }
 
-    const purpose = document.getElementById('guest-purpose').value;
-    const messageDiv = document.getElementById('guest-message');
+    localAdmins.push({ username, password, nama: name });
+    saveLocalData();
 
-    const { error } = await supabaseClient
-        .from('guests')
-        .insert([{
-            nama: name,
-            jenis_id: idType,
-            nomor_id: idNumber,
-            tipe_instansi: companyOption,
-            instansi: companyName,
-            keperluan: purpose,
-            status: 'Menunggu Akses'
-        }]);
-
-    if (error) {
-        messageDiv.className = 'message error';
-        messageDiv.textContent = 'Gagal mendaftar: ' + error.message;
-    } else {
-        messageDiv.className = 'message success';
-        messageDiv.textContent = 'Registrasi berhasil! Silakan cek menu "Status Tamu" dengan Nomor ID: ' + idNumber;
-        document.getElementById('guest-form').reset();
-    }
+    msg.className = 'message success';
+    msg.textContent = 'Akun Login Admin baru berhasil dibuat!';
+    document.getElementById('add-admin-form').reset();
 });
 
 // ==========================================
-// LOGIKA STATUS TAMU & NOTIFIKASI APPROVE REALTIME
+// KELOLA PERSETUJUAN TAMU & DAFTAR PT
 // ==========================================
-async function checkGuestStatus() {
-    const idNumber = document.getElementById('search-guest-id').value.trim();
-    const resultDiv = document.getElementById('guest-status-result');
-
-    if (!idNumber) {
-        alert('Masukkan Nomor ID terlebih dahulu!');
-        return;
-    }
-
-    resultDiv.innerHTML = '<p>Mencari data...</p>';
-
-    const { data, error } = await supabaseClient
-        .from('guests')
-        .select('*')
-        .eq('nomor_id', idNumber)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-    if (error || !data || data.length === 0) {
-        resultDiv.innerHTML = '<div class="message error" style="display:block;">Data tamu dengan Nomor ID tersebut tidak ditemukan.</div>';
-        return;
-    }
-
-    const guest = data[0];
-    renderGuestStatusUI(guest);
-
-    // Buka Channel Realtime Subscription untuk Notifikasi Langsung pada Dashboard Tamu
-    if (guestRealtimeChannel) {
-        supabaseClient.removeChannel(guestRealtimeChannel);
-    }
-
-    guestRealtimeChannel = supabaseClient
-        .channel('guest-status-changes')
-        .on(
-            'postgres_changes',
-            {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'guests',
-                filter: `id=eq.${guest.id}`
-            },
-            (payload) => {
-                const updatedGuest = payload.new;
-                renderGuestStatusUI(updatedGuest);
-
-                if (updatedGuest.status === 'Diberikan Akses') {
-                    alert('🔔 NOTIFIKASI: Akses Anda telah DISETUJUI oleh Admin!');
-                }
-            }
-        )
-        .subscribe();
-}
-
-function renderGuestStatusUI(guest) {
-    const resultDiv = document.getElementById('guest-status-result');
-    let statusClass = 'status-menunggu';
-    if (guest.status === 'Diberikan Akses') statusClass = 'status-diberikan';
-    if (guest.status === 'Ditolak') statusClass = 'status-ditolak';
-
-    let alertNotif = '';
-    if (guest.status === 'Diberikan Akses') {
-        alertNotif = `
-            <div class="approve-notification">
-                🎉 <strong>AKSES DISETUJUI!</strong><br>
-                Selamat datang <strong>${guest.nama}</strong>. Silakan tunjukkan halaman ini ke petugas di resepsionis/security.
-            </div>
-        `;
-    }
-
-    resultDiv.innerHTML = `
-        ${alertNotif}
-        <div class="card">
-            <h3>Detail Status Pendaftaran Tamu</h3>
-            <p><strong>Nama:</strong> ${guest.nama}</p>
-            <p><strong>Identitas:</strong> ${guest.jenis_id} - ${guest.nomor_id}</p>
-            <p><strong>Instansi:</strong> ${guest.instansi} (${guest.tipe_instansi})</p>
-            <p><strong>Keperluan:</strong> ${guest.keperluan}</p>
-            <p><strong>Status Akses:</strong> <span class="status-badge ${statusClass}">${guest.status}</span></p>
-        </div>
-    `;
-}
-
-// ==========================================
-// DASHBOARD UTAMA ADMIN
-// ==========================================
-async function fetchGuestsAdmin() {
+function fetchGuestsAdmin() {
     const tbody = document.getElementById('guests-tbody');
-    tbody.innerHTML = '<tr><td colspan="7">Memuat data...</td></tr>';
-
-    const { data, error } = await supabaseClient
-        .from('guests')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        tbody.innerHTML = '<tr><td colspan="7">Gagal memuat data</td></tr>';
-        return;
-    }
-
     tbody.innerHTML = '';
-    data.forEach(guest => {
+
+    localGuests.forEach(guest => {
         const tr = document.createElement('tr');
-        const date = new Date(guest.created_at).toLocaleString('id-ID');
-
-        let statusClass = 'status-menunggu';
-        if (guest.status === 'Diberikan Akses') statusClass = 'status-diberikan';
-        if (guest.status === 'Ditolak') statusClass = 'status-ditolak';
-
-        let actionBtns = `
-            <button onclick="updateGuestStatus('${guest.id}', 'Diberikan Akses')" class="btn-success">Approve</button>
-            <button onclick="updateGuestStatus('${guest.id}', 'Ditolak')" class="btn-danger">Tolak</button>
-        `;
-
-        if (guest.status === 'Diberikan Akses') {
-            actionBtns = '<span style="color:#10b981; font-weight:600;">✓ Akses Disetujui</span>';
-        } else if (guest.status === 'Ditolak') {
-            actionBtns = '<span style="color:#ef4444; font-weight:600;">✕ Akses Ditolak</span>';
-        }
+        const date = new Date(guest.created_at).toLocaleString();
 
         tr.innerHTML = `
+            <td><strong>${guest.id}</strong></td>
             <td>${date}</td>
             <td>${guest.nama}</td>
-            <td>${guest.jenis_id}<br><small>${guest.nomor_id}</small></td>
+            <td>${guest.jenis_id} (${guest.nomor_id})</td>
             <td>${guest.instansi}</td>
             <td>${guest.keperluan}</td>
-            <td><span class="status-badge ${statusClass}">${guest.status}</span></td>
-            <td>${actionBtns}</td>
+            <td><span class="status-badge">${guest.status}</span></td>
+            <td>
+                <button onclick="updateGuestStatus('${guest.id}', 'Diberikan Akses')" class="btn-approve">Setujui</button>
+                <button onclick="updateGuestStatus('${guest.id}', 'Akses Ditolak')" class="btn-reject">Tolak</button>
+            </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-async function updateGuestStatus(id, newStatus) {
-    const { error } = await supabaseClient
-        .from('guests')
-        .update({ status: newStatus })
-        .eq('id', id);
-
-    if (error) {
-        alert('Gagal memperbarui status: ' + error.message);
-    } else {
+function updateGuestStatus(guestId, status) {
+    const guest = localGuests.find(g => g.id === guestId);
+    if (guest) {
+        guest.status = status;
+        saveLocalData();
         fetchGuestsAdmin();
     }
 }
 
-// ==========================================
-// KELOLA PT DISATUJUI ADMIN
-// ==========================================
-async function fetchApprovedCompaniesAdmin() {
-    const tbody = document.getElementById('company-tbody');
-    tbody.innerHTML = '<tr><td colspan="3">Memuat PT...</td></tr>';
-
-    const { data, error } = await supabaseClient
-        .from('approved_companies')
-        .select('*')
-        .order('nama_pt', { ascending: true });
-
-    if (error) {
-        tbody.innerHTML = '<tr><td colspan="3">Gagal memuat PT</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = '';
-    data.forEach((pt, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${pt.nama_pt}</td>
-            <td><button onclick="deleteCompany('${pt.id}')" class="btn-danger">Hapus</button></td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-document.getElementById('add-company-form').addEventListener('submit', async (e) => {
+// Tambah PT Baru
+document.getElementById('add-pt-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    const companyInput = document.getElementById('new-company-name').value.trim();
-    const msgDiv = document.getElementById('company-message');
-
-    const { error } = await supabaseClient
-        .from('approved_companies')
-        .insert([{ nama_pt: companyInput }]);
-
-    if (error) {
-        msgDiv.className = 'message error';
-        msgDiv.textContent = 'Gagal menambah PT: ' + error.message;
-    } else {
-        msgDiv.className = 'message success';
-        msgDiv.textContent = 'PT Berhasil ditambahkan!';
-        document.getElementById('add-company-form').reset();
-        fetchApprovedCompaniesAdmin();
+    const ptName = document.getElementById('new-pt-name').value.trim();
+    
+    if (ptName && !localCompanies.includes(ptName)) {
+        localCompanies.push(ptName);
+        saveLocalData();
+        renderCompanyList();
+        populateCompanyDropdown();
+        document.getElementById('add-pt-form').reset();
     }
 });
 
-async function deleteCompany(id) {
-    if (!confirm('Yakin ingin menghapus PT ini dari daftar terdaftar?')) return;
+function renderCompanyList() {
+    const container = document.getElementById('pt-list-container');
+    container.innerHTML = '';
 
-    const { error } = await supabaseClient
-        .from('approved_companies')
-        .delete()
-        .eq('id', id);
-
-    if (error) {
-        alert('Gagal menghapus PT: ' + error.message);
-    } else {
-        fetchApprovedCompaniesAdmin();
-    }
-}
-
-// ==========================================
-// KELOLA AKUN LOGIN & RESET PASSWORD
-// ==========================================
-async function fetchUsersAdmin() {
-    const tbody = document.getElementById('users-tbody');
-    tbody.innerHTML = '<tr><td colspan="4">Memuat akun...</td></tr>';
-
-    const { data, error } = await supabaseClient
-        .from('app_users')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        tbody.innerHTML = '<tr><td colspan="4">Gagal memuat data akun</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = '';
-    data.forEach(user => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><strong>${user.username}</strong></td>
-            <td>${user.nama_lengkap}</td>
-            <td>${user.role}</td>
-            <td><button onclick="openResetModal('${user.id}', '${user.username}')" class="btn-secondary">Reset Password</button></td>
+    localCompanies.forEach((pt, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${pt}</span>
+            <button onclick="deleteCompany(${index})" class="btn-reject">Hapus</button>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(li);
     });
 }
 
-// Tambah Akun Baru
-document.getElementById('add-user-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fullname = document.getElementById('new-user-fullname').value;
-    const username = document.getElementById('new-user-username').value.trim();
-    const password = document.getElementById('new-user-password').value.trim();
-    const role = document.getElementById('new-user-role').value;
-    const msgDiv = document.getElementById('add-user-message');
-
-    const { error } = await supabaseClient
-        .from('app_users')
-        .insert([{
-            nama_lengkap: fullname,
-            username: username,
-            password: password,
-            role: role
-        }]);
-
-    if (error) {
-        msgDiv.className = 'message error';
-        msgDiv.textContent = 'Gagal membuat akun: ' + error.message;
-    } else {
-        msgDiv.className = 'message success';
-        msgDiv.textContent = 'Akun login baru berhasil ditambahkan!';
-        document.getElementById('add-user-form').reset();
-        fetchUsersAdmin();
-    }
-});
-
-// Modal Reset Password
-function openResetModal(userId, username) {
-    document.getElementById('reset-user-id').value = userId;
-    document.getElementById('reset-username-label').textContent = username;
-    document.getElementById('reset-new-password').value = '';
-    document.getElementById('reset-password-modal').style.display = 'flex';
+function deleteCompany(index) {
+    localCompanies.splice(index, 1);
+    saveLocalData();
+    renderCompanyList();
+    populateCompanyDropdown();
 }
 
-function closeResetModal() {
-    document.getElementById('reset-password-modal').style.display = 'none';
-}
-
-async function submitResetPassword() {
-    const userId = document.getElementById('reset-user-id').value;
-    const newPassword = document.getElementById('reset-new-password').value.trim();
-
-    if (!newPassword) {
-        alert('Masukkan password baru terlebih dahulu!');
-        return;
-    }
-
-    const { error } = await supabaseClient
-        .from('app_users')
-        .update({ password: newPassword })
-        .eq('id', userId);
-
-    if (error) {
-        alert('Gagal mereset password: ' + error.message);
-    } else {
-        alert('Password berhasil diperbarui!');
-        closeResetModal();
-        fetchUsersAdmin();
-    }
-}
-
-// Inisialisasi saat load
-checkAuthStatus();
-loadApprovedCompaniesSelect();
+// Inisialisasi awal
+saveLocalData();
+populateCompanyDropdown();

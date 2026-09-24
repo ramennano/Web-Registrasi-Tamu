@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrasi & Akses Buku Tamu Perusahaan</title>
-    <!-- Memuat Supabase dari CDN -->
+    <title>Sistem Registrasi & Akses Tamu Perusahaan</title>
+    <!-- Memuat Supabase Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Memuat file CSS eksternal -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,59 +14,58 @@
         <div class="logo">CompanySpace</div>
         <div class="nav-links">
             <button onclick="showPage('guest-page')">Buku Tamu</button>
+            <button onclick="showPage('guest-login-page')">Login Tamu</button>
             <button onclick="showPage('login-page')" id="nav-login-btn">Login Admin</button>
-            <button onclick="logoutAdmin()" id="nav-logout-btn" style="display: none;">Logout</button>
+            <button onclick="logoutAdmin()" id="nav-logout-btn" style="display: none;">Logout Admin</button>
         </div>
     </nav>
 
     <div class="container">
         
-        <!-- HALAMAN REGISTRASI TAMU (AKSES TANPA LOGIN) -->
+        <!-- HALAMAN REGISTRASI TAMU (TANPA LOGIN / EMAIL) -->
         <section id="guest-page" class="page-section active">
-            <h2>Form Registrasi Tamu</h2>
-            <p>Silakan isi data diri Anda. Akses akan diverifikasi oleh Admin.</p>
+            <h2>Form Registrasi Akses Tamu</h2>
+            <p>Silakan isi data diri Anda untuk mengajukan izin akses masuk.</p>
             
             <form id="guest-form">
                 <div class="form-group">
-                    <label for="guest-name">Nama Lengkap</label>
+                    <label>Nama Lengkap *</label>
                     <input type="text" id="guest-name" required placeholder="Masukkan nama lengkap Anda">
                 </div>
 
                 <div class="form-row">
-                    <div class="form-group half">
-                        <label for="guest-id-type">Jenis ID</label>
+                    <div class="form-group">
+                        <label>Jenis ID *</label>
                         <select id="guest-id-type" required>
                             <option value="">-- Pilih Jenis ID --</option>
                             <option value="KTP">KTP</option>
                             <option value="SIM">SIM</option>
                             <option value="Paspor">Paspor</option>
-                            <option value="Kartu Pegawai">Kartu Identitas Pegawai</option>
+                            <option value="Kartu Pegawai">Kartu Pegawai</option>
                             <option value="Lainnya">Lainnya</option>
                         </select>
                     </div>
-                    <div class="form-group half">
-                        <label for="guest-id-number">Nomor ID</label>
-                        <input type="text" id="guest-id-number" required placeholder="Contoh: 3201xxxxxxxxxxxx">
+                    <div class="form-group">
+                        <label>Nomor ID / Identitas</label>
+                        <input type="text" id="guest-id-number" placeholder="Contoh: 3171xxxxxxxxxxxx">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="guest-company-select">Asal Instansi / Perusahaan</label>
-                    <select id="guest-company-select" onchange="toggleManualCompanyInput()" required>
-                        <option value="">-- Pilih PT / Instansi --</option>
-                        <!-- PT dari database akan dimuat di sini -->
-                        <option value="MANUAL_INPUT">+ Lainnya (Ketik Manual)</option>
+                    <label>Asal Instansi/Perusahaan *</label>
+                    <select id="guest-company-select" required onchange="toggleManualCompany(this.value)">
+                        <option value="">-- Memuat Daftar PT/Instansi... --</option>
                     </select>
                 </div>
 
                 <div class="form-group" id="manual-company-group" style="display: none;">
-                    <label for="guest-company-manual">Nama PT / Instansi (Manual)</label>
-                    <input type="text" id="guest-company-manual" placeholder="Masukkan nama PT/Instansi Anda">
+                    <label>Tuliskan Nama Instansi/Perusahaan Manual *</label>
+                    <input type="text" id="guest-company-manual" placeholder="Tulis nama perusahaan Anda di sini">
                 </div>
 
                 <div class="form-group">
-                    <label for="guest-purpose">Keperluan</label>
-                    <textarea id="guest-purpose" required placeholder="Contoh: Meeting dengan tim HRD"></textarea>
+                    <label>Keperluan / Tujuan *</label>
+                    <textarea id="guest-purpose" required placeholder="Contoh: Pertemuan bisnis / Meeting dengan tim HRD"></textarea>
                 </div>
 
                 <button type="submit" class="btn-primary">Kirim Permintaan Akses</button>
@@ -75,102 +73,135 @@
             <div id="guest-message" class="message"></div>
         </section>
 
+        <!-- HALAMAN LOGIN TAMU (JIKA DISEDIAN AKUN OLEH ADMIN) -->
+        <section id="guest-login-page" class="page-section">
+            <h2>Login Akun Tamu</h2>
+            <p>Gunakan Username dan Password yang telah diberikan oleh Admin.</p>
+            <form id="guest-login-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="guest-login-username" required placeholder="Masukkan Username Tamu">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="guest-login-password" required placeholder="Masukkan Password">
+                </div>
+                <button type="submit" class="btn-primary">Login Tamu</button>
+            </form>
+            <div id="guest-login-message" class="message"></div>
+        </section>
+
         <!-- HALAMAN LOGIN ADMIN -->
         <section id="login-page" class="page-section">
             <h2>Login Administrator</h2>
             <form id="login-form">
                 <div class="form-group">
-                    <label for="admin-email">Email Admin</label>
-                    <input type="email" id="admin-email" required placeholder="admin@perusahaan.com">
+                    <label>Email Admin</label>
+                    <input type="email" id="admin-email" required placeholder="Email Admin">
                 </div>
                 <div class="form-group">
-                    <label for="admin-password">Password</label>
-                    <input type="password" id="admin-password" required placeholder="Password">
+                    <label>Password</label>
+                    <input type="password" id="admin-password" required placeholder="Password Admin">
                 </div>
-                <button type="submit" class="btn-primary">Login</button>
+                <button type="submit" class="btn-primary">Login Dashboard Admin</button>
             </form>
-            <div id="login-message" class="message error" style="display:none;"></div>
+            <div id="login-message" class="message error"></div>
         </section>
 
-        <!-- HALAMAN DASHBOARD ADMIN -->
+        <!-- DASHBOARD ADMIN -->
         <section id="admin-dashboard" class="page-section">
             <h2>Dashboard Administrator</h2>
-
-            <!-- Menu Tab Admin -->
+            
+            <!-- TAB NAVIGASI DASHBOARD -->
             <div class="admin-tabs">
-                <button class="tab-btn active" onclick="switchAdminTab('tab-guests')">Daftar Permintaan Tamu</button>
-                <button class="tab-btn" onclick="switchAdminTab('tab-companies')">Kelola PT Disetujui</button>
-                <button class="tab-btn" onclick="switchAdminTab('tab-accounts')">Kelola Akun Tamu</button>
+                <button class="tab-btn active" onclick="switchAdminTab('tab-requests')">Persetujuan Tamu</button>
+                <button class="tab-btn" onclick="switchAdminTab('tab-create-account')">+ Buat Akun Tamu</button>
+                <button class="tab-btn" onclick="switchAdminTab('tab-pt-master')">Master PT Disetujui</button>
             </div>
 
-            <!-- TAB 1: DAFTAR TAMU -->
-            <div id="tab-guests" class="tab-content active">
-                <h3>Permintaan & Riwayat Akses Tamu</h3>
+            <!-- TAB 1: PERSETUJUAN TAMU -->
+            <div id="tab-requests" class="tab-content active">
+                <h3>Daftar Permohonan Akses Tamu</h3>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
                                 <th>Waktu</th>
-                                <th>Nama</th>
-                                <th>Identitas</th>
-                                <th>Instansi / PT</th>
+                                <th>Nama & ID</th>
+                                <th>Instansi</th>
                                 <th>Keperluan</th>
                                 <th>Status</th>
-                                <th>Aksi Approve</th>
+                                <th>Aksi Persetujuan</th>
                             </tr>
                         </thead>
                         <tbody id="guests-tbody">
-                            <!-- Data Tamu -->
+                            <tr><td colspan="6">Memuat data...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- TAB 2: KELOLA PT DISETUJUI -->
-            <div id="tab-companies" class="tab-content">
-                <h3>Tambah PT / Instansi Terdaftar</h3>
-                <form id="add-company-form" class="inline-form">
-                    <input type="text" id="new-company-name" placeholder="Nama PT / Instansi Baru" required>
-                    <button type="submit" class="btn-success">Tambah PT</button>
+            <!-- TAB 2: BUAT AKUN LOGIN TAMU -->
+            <div id="tab-create-account" class="tab-content">
+                <h3>Tambah Akun Login Tamu Baru</h3>
+                <form id="create-guest-account-form">
+                    <div class="form-group">
+                        <label>Nama Tamu</label>
+                        <input type="text" id="acc-guest-name" required placeholder="Nama Lengkap Tamu">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Jenis ID</label>
+                            <select id="acc-guest-id-type" required>
+                                <option value="KTP">KTP</option>
+                                <option value="SIM">SIM</option>
+                                <option value="Paspor">Paspor</option>
+                                <option value="Kartu Pegawai">Kartu Pegawai</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nomor ID</label>
+                            <input type="text" id="acc-guest-id-number" placeholder="Nomor Identitas">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Instansi/Perusahaan</label>
+                        <input type="text" id="acc-guest-company" required placeholder="Nama Instansi/Perusahaan">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Username Tamu</label>
+                            <input type="text" id="acc-guest-username" required placeholder="Username unik">
+                        </div>
+                        <div class="form-group">
+                            <label>Password Tamu</label>
+                            <input type="password" id="acc-guest-password" required placeholder="Password">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Buat Akun & Izinkan Akses</button>
                 </form>
+                <div id="acc-message" class="message"></div>
+            </div>
 
-                <h3 style="margin-top: 1.5rem;">Daftar PT Disetujui</h3>
+            <!-- TAB 3: KELOLA NAMA PT / INSTANSI -->
+            <div id="tab-pt-master" class="tab-content">
+                <h3>Daftar PT / Instansi yang Disetujui</h3>
+                <form id="add-pt-form" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" id="new-pt-name" required placeholder="Masukkan Nama PT/Instansi Baru" style="flex: 1;">
+                    <button type="submit" class="btn-success" style="width: auto;">+ Tambah PT</button>
+                </form>
+                <div id="pt-message" class="message"></div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
                                 <th>Nama PT / Instansi</th>
-                                <th>Tanggal Dibuat</th>
+                                <th>Tanggal Ditambahkan</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="companies-tbody">
-                            <!-- Data PT -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- TAB 3: KELOLA AKUN LOGIN TAMU -->
-            <div id="tab-accounts" class="tab-content">
-                <h3>Tambah Email Akun Tamu Ter-Approve</h3>
-                <form id="add-guest-account-form" class="inline-form">
-                    <input type="email" id="new-guest-email" placeholder="Email Tamu Disetujui" required>
-                    <button type="submit" class="btn-primary">Setujui Email Tamu</button>
-                </form>
-
-                <h3 style="margin-top: 1.5rem;">Daftar Email Tamu Terdaftar</h3>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Email Tamu</th>
-                                <th>Status</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="guest-accounts-tbody">
-                            <!-- Data Akun Tamu -->
+                        <tbody id="pt-tbody">
+                            <tr><td colspan="3">Memuat data PT...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -180,7 +211,6 @@
 
     </div>
 
-    <!-- Memuat file JavaScript eksternal -->
     <script src="app.js"></script>
 </body>
 </html>

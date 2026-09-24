@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Registrasi Tamu</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="overlay">
+    <div class="container">
+      <a href="index.html" class="btn btn-secondary btn-back" data-i18n="back">Kembali</a>
+      <h3 style="text-align: center;" data-i18n="registerTitle">Formulir Registrasi Tamu</h3>
+      
+      <form id="registerForm">
+        <div class="form-group">
+          <label>Nama Lengkap</label>
+          <input type="text" id="fullName" required>
+        </div>
+        <div class="form-group">
+          <label>Jenis ID</label>
+          <select id="idType" required>
+            <option value="KTP">KTP</option>
+            <option value="SIM">SIM</option>
+            <option value="Paspor">Paspor</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nomor ID</label>
+          <input type="text" id="idNumber" required>
+        </div>
+        <div class="form-group">
+          <label>PT yang Dituju</label>
+          <select id="companyDestination" required></select>
+        </div>
+        <div class="form-group">
+          <label>Asal Instansi/Perusahaan (Manual)</label>
+          <input type="text" id="originCompany" placeholder="Contoh: PT Mitra Sejahtera" required>
+        </div>
+        <div class="form-group">
+          <label>Nomor HP/WhatsApp</label>
+          <input type="text" id="phone" required>
+        </div>
+        <div class="form-group">
+          <label>Tujuan Kunjungan</label>
+          <textarea id="purpose" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;" data-i18n="submit">Kirim</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/supabase-client.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    async function loadApprovedCompanies() {
+      const { data } = await supabase.from('site_config').select('approved_pt_list').eq('id', 1).single();
+      const select = document.getElementById('companyDestination');
+      if (data && data.approved_pt_list) {
+        data.approved_pt_list.forEach(pt => {
+          const opt = document.createElement('option');
+          opt.value = pt;
+          opt.textContent = pt;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const regCode = 'REG-' + Math.floor(100000 + Math.random() * 900000);
+      
+      const payload = {
+        registration_code: regCode,
+        full_name: document.getElementById('fullName').value,
+        id_type: document.getElementById('idType').value,
+        id_number: document.getElementById('idNumber').value,
+        company_destination: document.getElementById('companyDestination').value,
+        origin_company: document.getElementById('originCompany').value,
+        phone: document.getElementById('phone').value,
+        visit_purpose: document.getElementById('purpose').value,
+        status: 'Pending'
+      };
+
+      const { error } = await supabase.from('guests').insert([payload]);
+      if (!error) {
+        alert(`Registrasi Berhasil!\nSimpan ID Tamu Anda: ${regCode}`);
+        window.location.href = 'status.html?code=' + regCode;
+      } else {
+        alert('Gagal menyimpan data: ' + error.message);
+      }
+    });
+
+    loadApprovedCompanies();
+  </script>
+</body>
+</html>

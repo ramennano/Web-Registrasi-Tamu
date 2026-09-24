@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Kelola Kunjungan</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="overlay" style="justify-content: flex-start;">
+    <div class="container" style="max-width: 1000px; margin-top: 40px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Dashboard Kelola Kunjungan</h3>
+        <div>
+          <span id="userInfo" style="font-weight: bold; margin-right: 10px;"></span>
+          <button onclick="logout()" class="btn btn-danger">Logout</button>
+        </div>
+      </div>
+
+      <!-- Tab Approvals -->
+      <h4 style="margin-top: 20px;">Daftar Permohonan Tamu</h4>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Kode ID</th>
+              <th>Nama</th>
+              <th>Jenis & ID</th>
+              <th>Asal Instansi</th>
+              <th>Tujuan PT</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="guestTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Panel Khusus Super Admin -->
+      <div id="superAdminPanel" style="display: none; margin-top: 40px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
+        <h3 style="color: #dc2626;">Pengaturan Super Admin</h3>
+        
+        <div class="form-group">
+          <label>Ubah Nama PT</label>
+          <input type="text" id="cfgCompanyName">
+        </div>
+        
+        <div class="form-group">
+          <label>Upload Logo Perusahaan (Local File)</label>
+          <input type="file" id="cfgLogoFile" accept="image/*">
+        </div>
+
+        <div class="form-group">
+          <label>Upload Wallpaper Background (Local File)</label>
+          <input type="file" id="cfgBgFile" accept="image/*">
+        </div>
+
+        <button onclick="saveSuperAdminConfig()" class="btn btn-success">Simpan Konfigurasi</button>
+
+        <hr style="margin: 20px 0;">
+        <button onclick="resetAllConfigurations()" class="btn btn-danger">Hapus / Reset Semua Konfigurasi Website</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/supabase-client.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const user = JSON.parse(localStorage.getItem('auth_user'));
+    if (!user) window.location.href = 'login.html';
+
+    document.getElementById('userInfo').textContent = `${user.username} (${user.role})`;
+    if (user.role === 'super_admin') {
+      document.getElementById('superAdminPanel').style.display = 'block';
+    }
+
+    async function loadGuests() {
+      const { data } = await supabase.from('guests').select('*').order('created_at', { ascending: false });
+      const tbody = document.getElementById('guestTableBody');
+      tbody.innerHTML = '';
+
+      data.forEach(g => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${g.registration_code}</td>
+          <td>${g.full_name}</td>
+          <td>${g.id_type}: ${g.id_number}</td>
+          <td>${g.origin_company}</td>
+          <td>${g.company_destination}</td>
+          <td><span class="status-badge status-${g.status}">${g.status}</span></td>
+          <td>
+            <button onclick="updateStatus('${g.id}', 'Approved')" class="btn btn-success" style="padding: 4px 8px;">Approve</button>
+            <button onclick="updateStatus('${g.id}', 'Rejected')" class="btn btn-danger" style="padding: 4px 8px;">Reject</button>
+            <button onclick="deleteGuest('${g.id}')" class="btn btn-secondary" style="padding: 4px 8px;">Hapus Selesai</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function updateStatus(id, newStatus) {
+      await supabase.from('guests').update({ status: newStatus }).eq('id', id);
+      loadGuests();
+    }
+
+    async function deleteGuest(id) {
+      if (confirm('Hapus record kunjungan ini?')) {
+        await supabase.from('guests').delete().eq('id', id);
+        loadGuests();
+      }
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    async function saveSuperAdminConfig() {
+      const newName = document.getElementById('cfgCompanyName').value;
+      const logoFile = document.getElementById('cfgLogoFile').files[0];
+      const bgFile = document.getElementById('cfgBgFile').files[0];
+
+      let updateData = {};
+      if (newName) updateData.company_name = newName;
+      if (logoFile) updateData.logo_url = await fileToBase64(logoFile);
+      if (bgFile) updateData.wallpaper_url = await fileToBase64(bgFile);
+
+      const { error } = await supabase.from('site_config').update(updateData).eq('id', 1);
+      if (!error) {
+        alert('Konfigurasi Super Admin berhasil diperbarui!');
+        location.reload();
+      } else {
+        alert('Gagal update konfigurasi: ' + error.message);
+      }
+    }
+
+    async function resetAllConfigurations() {
+      if (confirm('Apakah Anda yakin ingin menghapus/mereset semua konfigurasi website?')) {
+        await supabase.from('site_config').update({
+          company_name: 'PT Utama Jaya',
+          logo_url: '',
+          wallpaper_url: ''
+        }).eq('id', 1);
+        alert('Semua konfigurasi berhasil di-reset!');
+        location.reload();
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('auth_user');
+      window.location.href = 'index.html';
+    }
+
+    loadGuests();
+  </script>
+</body>
+</html>

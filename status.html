@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Cek Status Kunjungan</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="overlay">
+    <div class="container">
+      <a href="index.html" class="btn btn-secondary btn-back" data-i18n="back">Kembali</a>
+      <h3 style="text-align: center;" data-i18n="statusTitle">Status Approving Tamu</h3>
+      
+      <div class="form-group">
+        <label>Masukkan ID Tamu / Nomor Registrasi</label>
+        <input type="text" id="searchRegCode" placeholder="Contoh: REG-123456">
+      </div>
+      <button onclick="checkStatus()" class="btn btn-primary" style="width: 100%;" data-i18n="search">Cari Status</button>
+
+      <div id="resultCard" style="margin-top: 20px; display: none; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px;">
+        <h4>Detail Tamu:</h4>
+        <p><strong>Nama:</strong> <span id="resName"></span></p>
+        <p><strong>Instansi Asal:</strong> <span id="resOrigin"></span></p>
+        <p><strong>Tujuan PT:</strong> <span id="resDestination"></span></p>
+        <p><strong>Status Approval:</strong> <span id="resStatus" class="status-badge"></span></p>
+        <div id="statusNotification" style="margin-top: 10px; font-weight: bold;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/supabase-client.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    async function checkStatus() {
+      const code = document.getElementById('searchRegCode').value.trim();
+      if (!code) return alert('Masukkan Kode Registrasi!');
+
+      const { data, error } = await supabase.from('guests').select('*').eq('registration_code', code).single();
+
+      if (error || !data) {
+        alert('Data Tamu/Nomor Registrasi tidak ditemukan.');
+        document.getElementById('resultCard').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('resultCard').style.display = 'block';
+      document.getElementById('resName').textContent = data.full_name;
+      document.getElementById('resOrigin').textContent = data.origin_company;
+      document.getElementById('resDestination').textContent = data.company_destination;
+      
+      const badge = document.getElementById('resStatus');
+      badge.textContent = data.status;
+      badge.className = `status-badge status-${data.status}`;
+
+      const notif = document.getElementById('statusNotification');
+      if (data.status === 'Approved') {
+        notif.style.color = '#166534';
+        notif.textContent = '🔔 Kunjungan Anda telah DISETUJUI. Silakan tunjukkan ID ini ke Resepsionis.';
+      } else if (data.status === 'Rejected') {
+        notif.style.color = '#991b1b';
+        notif.textContent = '❌ Kunjungan Anda DITOLAK. Silakan hubungi bagian Administrasi.';
+      } else {
+        notif.style.color = '#854d0e';
+        notif.textContent = '⏳ Kunjungan Anda masih MENUNGGU persetujuan.';
+      }
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeParam = urlParams.get('code');
+    if (codeParam) {
+      document.getElementById('searchRegCode').value = codeParam;
+      checkStatus();
+    }
+  </script>
+</body>
+</html>

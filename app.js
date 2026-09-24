@@ -1,17 +1,14 @@
 // ==========================================
-// KONFIGURASI SUPABASE (MASUKKAN URL & KEY ANDA DI SINI)
+// KONFIGURASI SUPABASE (GANTI SESUAI PROYEK ANDA)
 // ==========================================
-const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co'; 
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU'; 
+const SUPABASE_URL = 'ISI_URL_SUPABASE_ANDA';
+const SUPABASE_ANON_KEY = 'ISI_ANON_KEY_SUPABASE_ANDA';
 
 // Inisialisasi Klien Supabase
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// State Session Sederhana untuk Admin
-let currentAdminUser = localStorage.getItem('admin_user') || null;
-
 // ==========================================
-// FUNGSI NAVIGASI HALAMAN
+// FUNGSI NAVIGASI HALAMAN & TAB
 // ==========================================
 function showPage(pageId) {
     document.querySelectorAll('.page-section').forEach(section => {
@@ -19,214 +16,154 @@ function showPage(pageId) {
     });
     document.getElementById(pageId).classList.add('active');
 
-    // Memuat data sesuai halaman
     if (pageId === 'admin-dashboard') {
         fetchGuests();
-    } else if (pageId === 'admin-manage-page') {
-        fetchAdmins();
+        fetchApprovedCompanies();
+        fetchGuestAccounts();
+    } else if (pageId === 'guest-page') {
+        loadCompanyDropdown();
     }
 }
 
-// Cek Status Akses/Session Admin
-function checkAuthStatus() {
-    if (currentAdminUser) {
+function switchAdminTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    event.target.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+}
+
+// Cek Status Auth Admin
+async function checkAuthStatus() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    if (session) {
         document.getElementById('nav-login-btn').style.display = 'none';
-        document.getElementById('nav-dash-btn').style.display = 'inline-block';
-        document.getElementById('nav-manage-admin-btn').style.display = 'inline-block';
         document.getElementById('nav-logout-btn').style.display = 'inline-block';
+        showPage('admin-dashboard');
     } else {
         document.getElementById('nav-login-btn').style.display = 'inline-block';
-        document.getElementById('nav-dash-btn').style.display = 'none';
-        document.getElementById('nav-manage-admin-btn').style.display = 'none';
         document.getElementById('nav-logout-btn').style.display = 'none';
+        showPage('guest-page');
     }
 }
 
-// Modal Toggle
-function toggleModal(modalId, show) {
-    document.getElementById(modalId).style.display = show ? 'block' : 'none';
+// ==========================================
+// LOGIKA BUKU TAMU (GUEST)
+// ==========================================
+async function loadCompanyDropdown() {
+    const select = document.getElementById('guest-company-select');
+    
+    const { data, error } = await supabaseClient
+        .from('approved_companies')
+        .select('nama_pt')
+        .order('nama_pt', { ascending: true });
+
+    if (error) {
+        console.error('Gagal memuat PT:', error);
+        return;
+    }
+
+    // Reset opsi selain manual input
+    select.innerHTML = '<option value="">-- Pilih PT / Instansi --</option>';
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.nama_pt;
+        option.textContent = item.nama_pt;
+        select.appendChild(option);
+    });
+
+    const manualOption = document.createElement('option');
+    manualOption.value = 'MANUAL_INPUT';
+    manualOption.textContent = '+ Lainnya (Ketik Manual)';
+    select.appendChild(manualOption);
 }
 
-// ==========================================
-// REGISTRASI TAMU MANDIRI (PUBLIC)
-// ==========================================
+function toggleManualCompanyInput() {
+    const selectValue = document.getElementById('guest-company-select').value;
+    const manualGroup = document.getElementById('manual-company-group');
+    const manualInput = document.getElementById('guest-company-manual');
+
+    if (selectValue === 'MANUAL_INPUT') {
+        manualGroup.style.display = 'block';
+        manualInput.required = true;
+    } else {
+        manualGroup.style.display = 'none';
+        manualInput.required = false;
+        manualInput.value = '';
+    }
+}
+
 document.getElementById('guest-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const nama = document.getElementById('guest-name').value;
-    const jenis_id = document.getElementById('guest-id-type').value;
-    const instansi = document.getElementById('guest-company').value;
-    const keperluan = document.getElementById('guest-purpose').value;
+    const name = document.getElementById('guest-name').value;
+    const idType = document.getElementById('guest-id-type').value;
+    const idNumber = document.getElementById('guest-id-number').value;
+    const selectedCompany = document.getElementById('guest-company-select').value;
+    const manualCompany = document.getElementById('guest-company-manual').value;
+    const purpose = document.getElementById('guest-purpose').value;
     const messageDiv = document.getElementById('guest-message');
+
+    const finalCompany = selectedCompany === 'MANUAL_INPUT' ? manualCompany : selectedCompany;
 
     const { error } = await supabaseClient
         .from('guests')
         .insert([{ 
-            nama, 
-            jenis_id, 
-            instansi, 
-            keperluan, 
-            jam_masuk: new Date().toISOString(),
-            status: 'Menunggu' 
+            nama: name, 
+            jenis_id: idType,
+            nomor_id: idNumber,
+            instansi: finalCompany, 
+            keperluan: purpose 
         }]);
 
     if (error) {
         messageDiv.className = 'message error';
-        messageDiv.textContent = 'Gagal mengirim pendaftaran: ' + error.message;
+        messageDiv.textContent = 'Gagal mendaftar: ' + error.message;
     } else {
         messageDiv.className = 'message success';
-        messageDiv.textContent = 'Registrasi berhasil dikirim! Silakan tunggu konfirmasi dari Admin.';
+        messageDiv.textContent = 'Registrasi tamu berhasil! Menunggu konfirmasi admin.';
         document.getElementById('guest-form').reset();
+        toggleManualCompanyInput();
     }
 });
 
 // ==========================================
-// LOGIN ADMIN (MENGGUNAKAN TABEL ADMIN_USERS)
+// LOGIKA ADMIN LOGIN & LOGOUT
 // ==========================================
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const usernameInput = document.getElementById('admin-username').value.trim();
-    const passwordInput = document.getElementById('admin-password').value.trim();
+    const email = document.getElementById('admin-email').value;
+    const password = document.getElementById('admin-password').value;
     const messageDiv = document.getElementById('login-message');
 
-    const { data, error } = await supabaseClient
-        .from('admin_users')
-        .select('*')
-        .eq('username', usernameInput)
-        .eq('password', passwordInput)
-        .single();
+    const { error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
 
-    if (error || !data) {
+    if (error) {
         messageDiv.style.display = 'block';
-        messageDiv.textContent = 'Username atau Password salah!';
+        messageDiv.textContent = 'Email atau password salah!';
     } else {
         messageDiv.style.display = 'none';
-        currentAdminUser = data.username;
-        localStorage.setItem('admin_user', data.username);
         document.getElementById('login-form').reset();
         checkAuthStatus();
-        showPage('admin-dashboard');
     }
 });
 
-function logoutAdmin() {
-    currentAdminUser = null;
-    localStorage.removeItem('admin_user');
+async function logoutAdmin() {
+    await supabaseClient.auth.signOut();
     checkAuthStatus();
-    showPage('guest-page');
 }
 
 // ==========================================
-// MANAJEMEN AKUN ADMIN BARU (TANPA EMAIL)
-// ==========================================
-document.getElementById('create-admin-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const username = document.getElementById('new-admin-username').value.trim();
-    const password = document.getElementById('new-admin-password').value.trim();
-    const messageDiv = document.getElementById('create-admin-message');
-
-    const { error } = await supabaseClient
-        .from('admin_users')
-        .insert([{ username, password }]);
-
-    if (error) {
-        messageDiv.className = 'message error';
-        messageDiv.textContent = 'Gagal menambah admin (Username mungkin sudah ada): ' + error.message;
-    } else {
-        messageDiv.className = 'message success';
-        messageDiv.textContent = `Akun admin '${username}' berhasil dibuat!`;
-        document.getElementById('create-admin-form').reset();
-        fetchAdmins();
-    }
-});
-
-async function fetchAdmins() {
-    const tbody = document.getElementById('admin-list-tbody');
-    tbody.innerHTML = '<tr><td colspan="4">Memuat data admin...</td></tr>';
-
-    const { data, error } = await supabaseClient
-        .from('admin_users')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        tbody.innerHTML = '<tr><td colspan="4">Gagal memuat data admin</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = '';
-    data.forEach(admin => {
-        const tr = document.createElement('tr');
-        const created = new Date(admin.created_at).toLocaleDateString('id-ID');
-        tr.innerHTML = `
-            <td>${admin.id}</td>
-            <td><b>${admin.username}</b></td>
-            <td>${created}</td>
-            <td>
-                <button onclick="deleteAdmin('${admin.id}')" class="btn-delete">Hapus</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-async function deleteAdmin(id) {
-    if (!confirm('Apakah Anda yakin ingin menghapus akun admin ini?')) return;
-    
-    const { error } = await supabaseClient
-        .from('admin_users')
-        .delete()
-        .eq('id', id);
-
-    if (error) {
-        alert('Gagal menghapus admin: ' + error.message);
-    } else {
-        fetchAdmins();
-    }
-}
-
-// ==========================================
-// PENAMBAHAN TAMU MANUAL OLEH ADMIN
-// ==========================================
-document.getElementById('manual-guest-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const nama = document.getElementById('manual-name').value;
-    const jenis_id = document.getElementById('manual-id-type').value;
-    const instansi = document.getElementById('manual-company').value;
-    const keperluan = document.getElementById('manual-purpose').value;
-    const timeIn = document.getElementById('manual-time-in').value;
-    const timeOut = document.getElementById('manual-time-out').value;
-
-    const payload = {
-        nama,
-        jenis_id,
-        instansi,
-        keperluan,
-        jam_masuk: timeIn ? new Date(timeIn).toISOString() : new Date().toISOString(),
-        jam_keluar: timeOut ? new Date(timeOut).toISOString() : null,
-        status: 'Disetujui'
-    };
-
-    const { error } = await supabaseClient.from('guests').insert([payload]);
-
-    if (error) {
-        alert('Gagal menambah tamu: ' + error.message);
-    } else {
-        toggleModal('modal-add-guest', false);
-        document.getElementById('manual-guest-form').reset();
-        fetchGuests();
-    }
-});
-
-// ==========================================
-// DASHBOARD & AKSI APPROVAL TAMU
+// DASHBOARD: DAFTAR TAMU & APPROVAL
 // ==========================================
 async function fetchGuests() {
     const tbody = document.getElementById('guests-tbody');
-    tbody.innerHTML = '<tr><td colspan="9">Memuat data...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7">Memuat data...</td></tr>';
 
     const { data, error } = await supabaseClient
         .from('guests')
@@ -234,7 +171,7 @@ async function fetchGuests() {
         .order('created_at', { ascending: false });
 
     if (error) {
-        tbody.innerHTML = '<tr><td colspan="9">Gagal memuat data tamu</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7">Gagal memuat data</td></tr>';
         return;
     }
 
@@ -242,79 +179,170 @@ async function fetchGuests() {
     
     data.forEach(guest => {
         const tr = document.createElement('tr');
-        const regDate = new Date(guest.created_at).toLocaleString('id-ID');
-        const timeIn = guest.jam_masuk ? new Date(guest.jam_masuk).toLocaleTimeString('id-ID') : '-';
-        const timeOut = guest.jam_keluar ? new Date(guest.jam_keluar).toLocaleTimeString('id-ID') : '-';
+        const date = new Date(guest.created_at).toLocaleString('id-ID');
         
-        let statusClass = 'status-menunggu';
-        if (guest.status === 'Disetujui') statusClass = 'status-disetujui';
-        if (guest.status === 'Ditolak') statusClass = 'status-ditolak';
-        if (guest.status === 'Selesai') statusClass = 'status-selesai';
+        let statusBadge = `<span class="status-badge status-menunggu">Menunggu</span>`;
+        if (guest.status === 'Diberikan Akses') {
+            statusBadge = `<span class="status-badge status-diberikan">Diberikan Akses</span>`;
+        } else if (guest.status === 'Ditolak') {
+            statusBadge = `<span class="status-badge status-ditolak">Ditolak</span>`;
+        }
 
-        let actionBtns = '';
-        if (guest.status === 'Menunggu') {
-            actionBtns = `
-                <button onclick="updateGuestStatus('${guest.id}', 'Disetujui')" class="btn-approve">Approve</button>
-                <button onclick="updateGuestStatus('${guest.id}', 'Ditolak')" class="btn-reject">Tolak</button>
-            `;
-        } else if (guest.status === 'Disetujui') {
-            actionBtns = `
-                <button onclick="checkoutGuest('${guest.id}')" class="btn-checkout">Check-Out</button>
-            `;
-        } else {
-            actionBtns = `<i>${guest.status}</i>`;
+        let actionBtns = `
+            <button onclick="updateGuestStatus('${guest.id}', 'Diberikan Akses')" class="btn-success">Setujui</button>
+            <button onclick="updateGuestStatus('${guest.id}', 'Ditolak')" class="btn-danger">Tolak</button>
+        `;
+
+        if (guest.status !== 'Menunggu') {
+            actionBtns = `<i>Akses ${guest.status}</i>`;
         }
 
         tr.innerHTML = `
-            <td>${regDate}</td>
-            <td><b>${guest.nama}</b></td>
-            <td>${guest.jenis_id || 'KTP'}</td>
+            <td>${date}</td>
+            <td><strong>${guest.nama}</strong></td>
+            <td>${guest.jenis_id || '-'}: ${guest.nomor_id || '-'}</td>
             <td>${guest.instansi}</td>
             <td>${guest.keperluan}</td>
-            <td>${timeIn}</td>
-            <td>${timeOut}</td>
-            <td><span class="status-badge ${statusClass}">${guest.status}</span></td>
+            <td>${statusBadge}</td>
             <td>${actionBtns}</td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// Ubah Status Approval Tamu
 async function updateGuestStatus(id, newStatus) {
-    const updateData = { status: newStatus };
-    if (newStatus === 'Disetujui') {
-        updateData.jam_masuk = new Date().toISOString();
-    }
-
     const { error } = await supabaseClient
         .from('guests')
-        .update(updateData)
+        .update({ status: newStatus })
         .eq('id', id);
 
     if (error) {
-        alert('Gagal mengupdate status: ' + error.message);
+        alert('Gagal memperbarui status: ' + error.message);
     } else {
         fetchGuests();
     }
 }
 
-// Selesaikan Kunjungan / Jam Keluar (Check-out)
-async function checkoutGuest(id) {
+// ==========================================
+// DASHBOARD: KELOLA PT DISETUJUI
+// ==========================================
+async function fetchApprovedCompanies() {
+    const tbody = document.getElementById('companies-tbody');
+    tbody.innerHTML = '<tr><td colspan="3">Memuat data...</td></tr>';
+
+    const { data, error } = await supabaseClient
+        .from('approved_companies')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        tbody.innerHTML = '<tr><td colspan="3">Gagal memuat daftar PT</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    data.forEach(company => {
+        const tr = document.createElement('tr');
+        const date = new Date(company.created_at).toLocaleDateString('id-ID');
+        tr.innerHTML = `
+            <td><strong>${company.nama_pt}</strong></td>
+            <td>${date}</td>
+            <td><button onclick="deleteCompany('${company.id}')" class="btn-danger">Hapus</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+document.getElementById('add-company-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const companyName = document.getElementById('new-company-name').value;
+
     const { error } = await supabaseClient
-        .from('guests')
-        .update({ 
-            status: 'Selesai',
-            jam_keluar: new Date().toISOString()
-        })
+        .from('approved_companies')
+        .insert([{ nama_pt: companyName }]);
+
+    if (error) {
+        alert('Gagal menambah PT: ' + error.message);
+    } else {
+        document.getElementById('new-company-name').value = '';
+        fetchApprovedCompanies();
+    }
+});
+
+async function deleteCompany(id) {
+    if(!confirm('Yakin ingin menghapus PT ini?')) return;
+
+    const { error } = await supabaseClient
+        .from('approved_companies')
+        .delete()
         .eq('id', id);
 
     if (error) {
-        alert('Gagal meloloskan check-out: ' + error.message);
+        alert('Gagal menghapus PT: ' + error.message);
     } else {
-        fetchGuests();
+        fetchApprovedCompanies();
     }
 }
 
-// Inisialisasi awal saat halaman dibuka
+// ==========================================
+// DASHBOARD: KELOLA AKUN GUEST / EMAIL
+// ==========================================
+async function fetchGuestAccounts() {
+    const tbody = document.getElementById('guest-accounts-tbody');
+    tbody.innerHTML = '<tr><td colspan="3">Memuat data...</td></tr>';
+
+    const { data, error } = await supabaseClient
+        .from('guest_accounts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        tbody.innerHTML = '<tr><td colspan="3">Gagal memuat akun tamu</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    data.forEach(account => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${account.email}</td>
+            <td><span class="status-badge status-diberikan">${account.status}</span></td>
+            <td><button onclick="deleteGuestAccount('${account.id}')" class="btn-danger">Hapus</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+document.getElementById('add-guest-account-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('new-guest-email').value;
+
+    const { error } = await supabaseClient
+        .from('guest_accounts')
+        .insert([{ email: email, status: 'Approved' }]);
+
+    if (error) {
+        alert('Gagal menambahkan email: ' + error.message);
+    } else {
+        document.getElementById('new-guest-email').value = '';
+        fetchGuestAccounts();
+    }
+});
+
+async function deleteGuestAccount(id) {
+    if(!confirm('Yakin ingin menghapus akun tamu ini?')) return;
+
+    const { error } = await supabaseClient
+        .from('guest_accounts')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        alert('Gagal menghapus akun: ' + error.message);
+    } else {
+        fetchGuestAccounts();
+    }
+}
+
+// Inisialisasi saat pertama kali dimuat
 checkAuthStatus();

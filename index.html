@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrasi Tamu Perusahaan</title>
+    <title id="site-title-tag">Registrasi Tamu Perusahaan</title>
     <!-- Memuat Supabase dari CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Memuat file CSS eksternal -->
@@ -12,7 +12,7 @@
 <body>
 
     <nav class="navbar">
-        <div class="logo">CompanySpace</div>
+        <div class="logo" id="site-logo">CompanySpace</div>
         <div class="nav-links">
             <button onclick="showPage('guest-page')">Buku Tamu</button>
             <button onclick="showPage('login-page')" id="nav-login-btn">Login Admin</button>
@@ -24,8 +24,8 @@
         
         <!-- HALAMAN REGISTRASI TAMU -->
         <section id="guest-page" class="page-section active">
-            <h2>Form Registrasi Tamu</h2>
-            <p>Silakan isi data diri Anda. Admin akan memberikan akses setelah data diverifikasi.</p>
+            <h2 id="guest-heading">Form Registrasi Tamu</h2>
+            <p id="guest-subheading">Silakan isi data diri Anda. Admin akan memberikan akses setelah data diverifikasi.</p>
             
             <form id="guest-form">
                 <div class="form-group">
@@ -59,28 +59,122 @@
                 </div>
                 <button type="submit" class="btn-primary">Login</button>
             </form>
-            <div id="login-message" class="message error"></div>
+            <div id="login-message" class="message error" style="display: none;"></div>
         </section>
 
         <!-- HALAMAN DASHBOARD ADMIN -->
         <section id="admin-dashboard" class="page-section">
-            <h2>Dashboard Admin - Daftar Tamu</h2>
-            <div class="table-container">
-                <table id="guests-table">
-                    <thead>
-                        <tr>
-                            <th>Waktu</th>
-                            <th>Nama</th>
-                            <th>Instansi</th>
-                            <th>Keperluan</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="guests-tbody">
-                        <!-- Data tamu akan dimuat di sini oleh JavaScript -->
-                    </tbody>
-                </table>
+            <div class="dashboard-header">
+                <h2>Dashboard Admin</h2>
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchAdminTab('data-tab')">Daftar Tamu</button>
+                    <button class="tab-btn" onclick="switchAdminTab('config-tab')">Konfigurasi Web</button>
+                </div>
+            </div>
+
+            <!-- TAB 1: DAFTAR DATA TAMU -->
+            <div id="data-tab" class="tab-content active">
+                <div class="action-bar">
+                    <button onclick="toggleAdminAddGuest()" class="btn-primary btn-sm">+ Tambah Data Tamu (Manual)</button>
+                    <button onclick="deleteAllGuests()" class="btn-danger btn-sm">🗑️ Hapus Semua Data Tamu</button>
+                </div>
+
+                <!-- Form Tambah Tamu oleh Admin (Hidden by Default) -->
+                <div id="admin-add-guest-box" class="card-box" style="display: none;">
+                    <h3>Tambah Data Tamu Manual</h3>
+                    <form id="admin-guest-form">
+                        <div class="form-group">
+                            <label>Nama Lengkap</label>
+                            <input type="text" id="admin-guest-name" required placeholder="Nama Tamu">
+                        </div>
+                        <div class="form-group">
+                            <label>Instansi</label>
+                            <input type="text" id="admin-guest-company" required placeholder="Instansi / Perusahaan">
+                        </div>
+                        <div class="form-group">
+                            <label>Keperluan</label>
+                            <input type="text" id="admin-guest-purpose" required placeholder="Keperluan">
+                        </div>
+                        <div class="button-group">
+                            <button type="submit" class="btn-success">Simpan Data Tamu</button>
+                            <button type="button" onclick="toggleAdminAddGuest()" class="btn-secondary">Batal</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <table id="guests-table">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Nama</th>
+                                <th>Instansi</th>
+                                <th>Keperluan</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="guests-tbody">
+                            <!-- Data tamu dimuat via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 2: KONFIGURASI WEB -->
+            <div id="config-tab" class="tab-content" style="display: none;">
+                <h3>Pengaturan & Konfigurasi Web</h3>
+                <p>Ubah tampilan nama situs, teks deskripsi, atau tambahkan variabel konfigurasi baru.</p>
+
+                <form id="config-form" class="card-box">
+                    <div class="form-group">
+                        <label>Nama Perusahaan / Logo Web (`site_title`)</label>
+                        <input type="text" id="cfg-site-title" placeholder="Contoh: CompanySpace">
+                    </div>
+                    <div class="form-group">
+                        <label>Judul Form Buku Tamu (`guest_heading`)</label>
+                        <input type="text" id="cfg-guest-heading" placeholder="Contoh: Form Registrasi Tamu">
+                    </div>
+                    <div class="form-group">
+                        <label>Pesan Sub-Judul (`guest_subheading`)</label>
+                        <textarea id="cfg-guest-subheading" placeholder="Pesan petunjuk untuk pengunjung"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Simpan Konfigurasi</button>
+                </form>
+
+                <hr class="divider">
+
+                <h3>Tambah Konfigurasi Kustom</h3>
+                <form id="custom-config-form" class="card-box">
+                    <div class="form-group">
+                        <label>Nama Kunci Konfigurasi (Key)</label>
+                        <input type="text" id="cfg-key" required placeholder="Contoh: max_daily_guests">
+                    </div>
+                    <div class="form-group">
+                        <label>Nilai Konfigurasi (Value)</label>
+                        <input type="text" id="cfg-value" required placeholder="Contoh: 50">
+                    </div>
+                    <button type="submit" class="btn-success">+ Tambah / Update Konfigurasi</button>
+                </form>
+
+                <h3>Daftar Konfigurasi Aktif</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kunci (Key)</th>
+                                <th>Nilai (Value)</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="config-tbody">
+                            <!-- Data konfigurasi dimuat via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button onclick="resetAllConfigs()" class="btn-danger btn-sm">🗑️ Reset Semua Konfigurasi ke Default</button>
+                </div>
             </div>
         </section>
 

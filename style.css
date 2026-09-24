@@ -5,8 +5,10 @@
     --text-color: #1f2937;
     --card-bg: #ffffff;
     --border-color: #e5e7eb;
-    --danger-color: #dc2626;
+    --danger-color: #ef4444;
+    --danger-hover: #dc2626;
     --success-color: #10b981;
+    --warning-color: #f59e0b;
 }
 
 * {
@@ -43,6 +45,7 @@ body {
     font-size: 1rem;
     margin-left: 1rem;
     color: var(--text-color);
+    font-weight: 500;
 }
 
 .nav-links button:hover {
@@ -50,7 +53,7 @@ body {
 }
 
 .container {
-    max-width: 1000px;
+    max-width: 1100px;
     margin: 2rem auto;
     padding: 0 1rem;
 }
@@ -67,8 +70,8 @@ body {
     display: block;
 }
 
-h2, h3 {
-    margin-bottom: 1rem;
+h2 {
+    margin-bottom: 0.5rem;
     color: #111827;
 }
 
@@ -94,6 +97,7 @@ input, textarea, select {
     border-radius: 4px;
     outline: none;
     font-size: 0.95rem;
+    background-color: #fff;
 }
 
 input:focus, textarea:focus, select:focus {
@@ -105,6 +109,7 @@ textarea {
     min-height: 90px;
 }
 
+/* Tombol */
 .btn-primary {
     background-color: var(--primary-color);
     color: white;
@@ -120,6 +125,20 @@ textarea {
     background-color: var(--hover-color);
 }
 
+.btn-secondary {
+    background-color: #4b5563;
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-secondary:hover {
+    background-color: #374151;
+}
+
 .btn-success {
     background-color: var(--success-color);
     color: white;
@@ -128,103 +147,40 @@ textarea {
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
+    margin-right: 4px;
 }
 
 .btn-success:hover {
     background-color: #059669;
 }
 
-.btn-warning {
-    background-color: #f59e0b;
+.btn-danger {
+    background-color: var(--danger-color);
     color: white;
-    padding: 0.4rem 0.8rem;
+    padding: 0.5rem 1rem;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
 }
 
-.btn-warning:hover {
-    background-color: #d97706;
-}
-
-.btn-danger {
-    background-color: var(--danger-color);
-    color: white;
-    padding: 0.6rem 1.2rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-
 .btn-danger:hover {
-    background-color: #b91c1c;
+    background-color: var(--danger-hover);
 }
 
-/* Tab Admin */
-.admin-tabs {
+/* Header & Tabel Dashboard */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.dashboard-actions {
     display: flex;
     gap: 0.5rem;
-    border-bottom: 2px solid var(--border-color);
-    margin-bottom: 1.5rem;
-}
-
-.tab-btn {
-    padding: 0.6rem 1.2rem;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-weight: 600;
-    color: #6b7280;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-}
-
-.tab-btn.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-}
-
-.tab-btn.danger-tab.active {
-    color: var(--danger-color);
-    border-bottom-color: var(--danger-color);
-}
-
-.admin-tab-content {
-    display: none;
-}
-
-.admin-tab-content.active {
-    display: block;
-}
-
-/* Danger Zone Box */
-.danger-zone {
-    border: 1px solid #fca5a5;
-    background-color: #fef2f2;
-    padding: 1.2rem;
-    border-radius: 6px;
-}
-
-/* Status Badge & Messages */
-.message {
-    margin-top: 1rem;
-    padding: 1rem;
-    border-radius: 4px;
-    display: none;
-}
-
-.message.success {
-    display: block;
-    background-color: #d1fae5;
-    color: #065f46;
-}
-
-.message.error {
-    display: block;
-    background-color: #fee2e2;
-    color: #991b1b;
 }
 
 .table-container {
@@ -234,12 +190,12 @@ textarea {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     font-size: 0.9rem;
 }
 
 th, td {
-    padding: 0.75rem 0.5rem;
+    padding: 0.85rem 0.75rem;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
@@ -249,11 +205,13 @@ th {
     font-weight: 600;
 }
 
+/* Status Badge */
 .status-badge {
     padding: 0.25rem 0.6rem;
     border-radius: 999px;
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: 600;
+    display: inline-block;
 }
 
 .status-menunggu {
@@ -266,7 +224,61 @@ th {
     color: #065f46;
 }
 
-.status-selelasi {
+.status-selesai {
     background-color: #e0e7ff;
     color: #3730a3;
+}
+
+/* Pesan Notifikasi */
+.message {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.message.success {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.message.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Modal Popup */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    background-color: rgba(0,0,0,0.5); 
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 8% auto;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 450px;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.close-btn {
+    position: absolute;
+    right: 1.2rem;
+    top: 1rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: #6b7280;
+}
+
+.close-btn:hover {
+    color: #111827;
 }

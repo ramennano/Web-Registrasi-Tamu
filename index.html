@@ -45,26 +45,26 @@
             <!-- Step 1: Username & Password -->
             <form id="loginForm">
                 <div class="input-group">
-                    <label for="username">Username</label>
+                    <label for="username">Username / Email</label>
                     <input type="text" id="username" required>
                 </div>
                 <div class="input-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" required>
                 </div>
-                <button type="submit">Lanjut</button>
-                <p class="hint">Demo Username: admin | Pass: admin123</p>
+                <button type="submit" id="btnLoginSubmit">Lanjut ke 2FA</button>
+                <p class="hint">Default User: admin | Pass: admin123</p>
             </form>
 
-            <!-- Step 2: 2FA (Disembunyikan pada awalnya) -->
+            <!-- Step 2: 2FA Security -->
             <form id="twoFaForm" style="display: none;">
-                <p>Masukkan 6 digit kode 2FA dari aplikasi Authenticator Anda.</p>
+                <p>Masukkan 6 digit kode keamanan 2FA Anda.</p>
                 <div class="input-group">
-                    <label for="twoFaCode">Kode 2FA</label>
-                    <input type="text" id="twoFaCode" maxlength="6" required>
+                    <label for="twoFaCode">Kode 2FA (OTP)</label>
+                    <input type="text" id="twoFaCode" maxlength="6" placeholder="123456" required>
                 </div>
-                <button type="submit">Verifikasi & Login</button>
-                <p class="hint">Demo 2FA Kode: 123456</p>
+                <button type="submit" id="btnVerify2FA">Verifikasi & Masuk</button>
+                <p class="hint">Demo Kode 2FA: 123456</p>
             </form>
             <p id="loginMessage" class="message error"></p>
         </div>

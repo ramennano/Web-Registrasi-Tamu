@@ -1,153 +1,166 @@
-// --- 1. KONFIGURASI SUPABASE ---
-// Ganti dengan URL dan ANON KEY milik Anda dari Supabase Dashboard
-const supabaseUrl = 'https://gyortxfcoifxzrwfogzr.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+/* ==========================================================================
+   KONFIGURASI SUPABASE & STATE APLIKASI
+   ========================================================================== */
+const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU';
 
-// --- KREDENSIAL ADMIN DEFAULT & 2FA (Hanya untuk keperluan demo klien) ---
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'admin123';
-const DUMMY_2FA_CODE = '123456';
+let supabaseClient = null;
+let isSupabaseActive = false;
+let pendingAdminUser = null;
 
-// --- 2. LOGIKA HALAMAN REGISTRASI (index.html) ---
-const visitorForm = document.getElementById('visitorForm');
-if (visitorForm) {
-    visitorForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('name').value;
-        const company = document.getElementById('company').value;
-        const purpose = document.getElementById('purpose').value;
-        const msg = document.getElementById('visitorMessage');
+// Inisialisasi saat halaman dimuat
+window.addEventListener('DOMContentLoaded', () => {
+    initSupabaseConnection();
+    setupEventListeners();
+});
 
-        msg.textContent = 'Menyimpan data...';
-        msg.className = 'message';
-
-        // Insert ke Supabase
-        const { data, error } = await supabase
-            .from('visitors')
-            .insert([{ name, company, purpose }]);
-
-        if (error) {
-            msg.textContent = 'Gagal mendaftar. Silakan coba lagi.';
-            msg.className = 'message error';
-            console.error(error);
-        } else {
-            msg.textContent = 'Registrasi Berhasil! Terima kasih.';
-            visitorForm.reset();
-            setTimeout(() => { msg.textContent = ''; }, 3000);
+function initSupabaseConnection() {
+    if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            isSupabaseActive = true;
+            console.log("Terhubung ke Supabase database.");
+        } catch (e) {
+            console.warn("Gagal inisialisasi Supabase, menggunakan Mock Mode:", e);
         }
-    });
-
-    // Modal Login Logic
-    const modal = document.getElementById('loginModal');
-    const btnOpen = document.getElementById('btnOpenLogin');
-    const btnClose = document.getElementById('closeLogin');
-    const loginForm = document.getElementById('loginForm');
-    const twoFaForm = document.getElementById('twoFaForm');
-    const loginMsg = document.getElementById('loginMessage');
-    const modalTitle = document.getElementById('modalTitle');
-
-    // Buka Modal
-    btnOpen.addEventListener('click', () => {
-        modal.style.display = 'flex';
-        loginForm.style.display = 'block';
-        twoFaForm.style.display = 'none';
-        modalTitle.textContent = 'Login Admin';
-        loginMsg.textContent = '';
-        loginForm.reset();
-        twoFaForm.reset();
-    });
-
-    // Tutup Modal
-    btnClose.addEventListener('click', () => modal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) modal.style.display = 'none';
-    });
-
-    // Submit Username & Password (Step 1)
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const user = document.getElementById('username').value;
-        const pass = document.getElementById('password').value;
-
-        if (user === ADMIN_USERNAME && pass === ADMIN_PASSWORD) {
-            // Lanjut ke tahap 2FA
-            loginForm.style.display = 'none';
-            twoFaForm.style.display = 'block';
-            modalTitle.textContent = 'Verifikasi 2FA';
-            loginMsg.textContent = '';
-        } else {
-            loginMsg.textContent = 'Username atau password salah!';
-        }
-    });
-
-    // Submit Kode 2FA (Step 2)
-    twoFaForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const code = document.getElementById('twoFaCode').value;
-
-        if (code === DUMMY_2FA_CODE) {
-            // Simpan status login di session storage
-            sessionStorage.setItem('isAdminLoggedIn', 'true');
-            window.location.href = 'admin.html'; // Redirect ke dashboard
-        } else {
-            loginMsg.textContent = 'Kode 2FA tidak valid!';
-        }
-    });
+    }
 }
 
-// --- 3. LOGIKA HALAMAN DASHBOARD ADMIN (admin.html) ---
-const visitorsTableBody = document.getElementById('visitorsTableBody');
-if (visitorsTableBody) {
-    // Proteksi Halaman: Cek apakah Admin sudah login via Session
-    if (sessionStorage.getItem('isAdminLoggedIn') !== 'true') {
-        alert('Anda harus login terlebih dahulu!');
-        window.location.href = 'index.html';
-    }
+/* ==========================================================================
+   EVENT LISTENERS & KONTROL UI
+   ========================================================================== */
+function setupEventListeners() {
+    const modal = document.getElementById('loginModal');
+    const btnOpenLogin = document.getElementById('btnOpenLogin');
+    const closeLogin = document.getElementById('closeLogin');
 
-    // Fungsi fetch data dari Supabase
-    async function fetchVisitors() {
-        const { data, error } = await supabase
-            .from('visitors')
-            .select('*')
-            .order('visit_date', { ascending: false }); // urutkan data terbaru
-
-        if (error) {
-            visitorsTableBody.innerHTML = `<tr><td colspan="4" class="error">Gagal memuat data</td></tr>`;
-            console.error(error);
-            return;
-        }
-
-        if (data.length === 0) {
-            visitorsTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Belum ada tamu yang terdaftar</td></tr>`;
-            return;
-        }
-
-        visitorsTableBody.innerHTML = '';
-        data.forEach(visitor => {
-            // Format tanggal
-            const date = new Date(visitor.visit_date).toLocaleString('id-ID');
-            
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${date}</td>
-                <td><strong>${visitor.name}</strong></td>
-                <td>${visitor.company}</td>
-                <td>${visitor.purpose}</td>
-            `;
-            visitorsTableBody.appendChild(tr);
+    // Tombol Buka Modal Login Admin
+    if (btnOpenLogin) {
+        btnOpenLogin.addEventListener('click', () => {
+            modal.style.display = 'flex';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('twoFaForm').style.display = 'none';
+            document.getElementById('loginMessage').innerText = '';
+            document.getElementById('loginForm').reset();
         });
     }
 
-    // Panggil fetch data
-    fetchVisitors();
-
-    // Logika Logout
-    const btnLogout = document.getElementById('btnLogout');
-    if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
-            sessionStorage.removeItem('isAdminLoggedIn');
-            window.location.href = 'index.html';
+    // Tombol Tutup Modal
+    if (closeLogin) {
+        closeLogin.addEventListener('click', () => {
+            modal.style.display = 'none';
         });
+    }
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    // Submit Form Tamu
+    const visitorForm = document.getElementById('visitorForm');
+    if (visitorForm) {
+        visitorForm.addEventListener('submit', handleVisitorSubmit);
+    }
+
+    // Submit Login Step 1 (Username & Password)
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleAdminLogin);
+    }
+
+    // Submit 2FA Step 2
+    const twoFaForm = document.getElementById('twoFaForm');
+    if (twoFaForm) {
+        twoFaForm.addEventListener('submit', handle2FAVerify);
+    }
+}
+
+/* ==========================================================================
+   FUNGSI REGISTRASI TAMU KE SUPABASE
+   ========================================================================== */
+async function handleVisitorSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('name').value.trim();
+    const company = document.getElementById('company').value.trim();
+    const purpose = document.getElementById('purpose').value.trim();
+    const msgEl = document.getElementById('visitorMessage');
+
+    try {
+        if (isSupabaseActive && supabaseClient) {
+            const { error } = await supabaseClient.from('visitors').insert([
+                { name, company, purpose, check_in_time: new Date().toISOString(), status: 'active' }
+            ]);
+            if (error) throw error;
+        }
+        msgEl.style.color = '#16a34a';
+        msgEl.innerText = 'Registrasi berhasil! Selamat datang.';
+        document.getElementById('visitorForm').reset();
+    } catch (err) {
+        console.error(err);
+        msgEl.style.color = '#dc2626';
+        msgEl.innerText = 'Gagal menyimpan data: ' + err.message;
+    }
+}
+
+/* ==========================================================================
+   FUNGSI LOGIN ADMIN & 2FA SECURITY
+   ========================================================================== */
+async function handleAdminLogin(e) {
+    e.preventDefault();
+    const usernameInput = document.getElementById('username').value.trim();
+    const passwordInput = document.getElementById('password').value.trim();
+    const msgEl = document.getElementById('loginMessage');
+
+    msgEl.innerText = '';
+
+    try {
+        let isAuthenticated = false;
+
+        if (isSupabaseActive && supabaseClient && usernameInput.includes('@')) {
+            // Cek otentikasi via Supabase Auth jika menggunakan format email
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: usernameInput,
+                password: passwordInput
+            });
+            if (!error && data.user) {
+                isAuthenticated = true;
+            }
+        } 
+        
+        // Fallback / Admin Default Default Tanpa Registrasi Email (Username: admin, Pass: admin123)
+        if (!isAuthenticated) {
+            if (usernameInput === 'admin' && passwordInput === 'admin123') {
+                isAuthenticated = true;
+            }
+        }
+
+        if (isAuthenticated) {
+            pendingAdminUser = usernameInput;
+            // Pindah ke tampilan 2FA Security
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('twoFaForm').style.display = 'block';
+            document.getElementById('modalTitle').innerText = 'Verifikasi 2FA';
+        } else {
+            throw new Error('Username/Email atau Password salah!');
+        }
+    } catch (err) {
+        msgEl.innerText = err.message || 'Gagal melakukan login admin.';
+    }
+}
+
+function handle2FAVerify(e) {
+    e.preventDefault();
+    const code = document.getElementById('twoFaCode').value.trim();
+    const msgEl = document.getElementById('loginMessage');
+
+    // Kode verifikasi 2FA (Default demo: 123456)
+    if (code === '123456') {
+        localStorage.setItem('corpvisit_admin_logged', 'true');
+        alert('Login Admin & 2FA Berhasil!');
+        window.location.href = 'admin.html'; // Redirect ke halaman dashboard admin
+    } else {
+        msgEl.innerText = 'Kode 2FA salah! Gunakan kode demo: 123456';
     }
 }

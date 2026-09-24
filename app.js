@@ -1,48 +1,34 @@
 // ==========================================
 // KONFIGURASI SUPABASE
 // ==========================================
-const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co'; 
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU';
+const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co'; // Sesuaikan URL Supabase Anda
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU'; // Sesuaikan Anon Key
 
-// Inisialisasi klien Supabase
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// State Konfigurasi Default
-let webConfigs = {
-    site_title: 'CompanySpace',
-    guest_heading: 'Form Registrasi Tamu',
-    guest_subheading: 'Silakan isi data diri Anda. Admin akan memberikan akses setelah data diverifikasi.'
-};
-
 // ==========================================
-// FUNGSI NAVIGASI HALAMAN
+// FUNGSI NAVIGASI
 // ==========================================
 function showPage(pageId) {
     document.querySelectorAll('.page-section').forEach(section => {
         section.classList.remove('active');
     });
-    
-    const targetSection = document.getElementById(pageId);
-    if (targetSection) {
-        targetSection.classList.add('active');
-    }
+    document.getElementById(pageId).classList.add('active');
 
-    if (pageId === 'login-page') {
-        const msgDiv = document.getElementById('login-message');
-        if (msgDiv) {
-            msgDiv.style.display = 'none';
-            msgDiv.textContent = '';
-        }
-    }
-
-    if (pageId === 'admin-dashboard') {
+    if(pageId === 'admin-dashboard') {
         fetchGuests();
-        loadConfigToForm();
     }
 }
 
-// Cek status login saat halaman pertama dimuat
-async function checkInitialAuth() {
+function switchAdminTab(tabId) {
+    document.querySelectorAll('.admin-tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+}
+
+async function checkAuthStatus() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     
     if (session) {
@@ -52,51 +38,37 @@ async function checkInitialAuth() {
     } else {
         document.getElementById('nav-login-btn').style.display = 'inline-block';
         document.getElementById('nav-logout-btn').style.display = 'none';
+        showPage('guest-page');
     }
 }
 
-// Event listener otentikasi Supabase Realtime
-supabaseClient.auth.onAuthStateChange((event, session) => {
-    const loginBtn = document.getElementById('nav-login-btn');
-    const logoutBtn = document.getElementById('nav-logout-btn');
-
-    if (session) {
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'inline-block';
-        if (event === 'SIGNED_IN') {
-            showPage('admin-dashboard');
-        }
-    } else {
-        if (loginBtn) loginBtn.style.display = 'inline-block';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-        if (event === 'SIGNED_OUT') {
-            showPage('guest-page');
-        }
-    }
-});
-
 // ==========================================
-// LOGIKA BUKU TAMU (GUEST)
+// LOGIKA BUKU TAMU
 // ==========================================
 document.getElementById('guest-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const name = document.getElementById('guest-name').value;
     const company = document.getElementById('guest-company').value;
+    const idType = document.getElementById('guest-id-type').value;
     const purpose = document.getElementById('guest-purpose').value;
     const messageDiv = document.getElementById('guest-message');
 
     const { error } = await supabaseClient
         .from('guests')
-        .insert([{ nama: name, instansi: company, keperluan: purpose, status: 'Menunggu Akses' }]);
+        .insert([{ 
+            nama: name, 
+            instansi: company, 
+            jenis_id: idType,
+            keperluan: purpose,
+            status: 'Menunggu'
+        }]);
 
     if (error) {
         messageDiv.className = 'message error';
-        messageDiv.style.display = 'block';
         messageDiv.textContent = 'Gagal mendaftar: ' + error.message;
     } else {
         messageDiv.className = 'message success';
-        messageDiv.style.display = 'block';
         messageDiv.textContent = 'Registrasi berhasil! Silakan tunggu konfirmasi admin.';
         document.getElementById('guest-form').reset();
     }
@@ -119,43 +91,25 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
     if (error) {
         messageDiv.className = 'message error';
-        messageDiv.style.display = 'block';
         messageDiv.textContent = 'Email atau password salah!';
     } else {
         messageDiv.style.display = 'none';
         document.getElementById('login-form').reset();
-        showPage('admin-dashboard');
+        checkAuthStatus();
     }
 });
 
 async function logoutAdmin() {
     await supabaseClient.auth.signOut();
-}
-
-// Switch Tab di Dashboard Admin
-function switchAdminTab(tabId) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-
-    if (tabId === 'data-tab') {
-        document.getElementById('data-tab').style.display = 'block';
-        event.target.classList.add('active');
-        fetchGuests();
-    } else if (tabId === 'config-tab') {
-        document.getElementById('config-tab').style.display = 'block';
-        event.target.classList.add('active');
-        renderConfigTable();
-    }
+    checkAuthStatus();
 }
 
 // ==========================================
-// LOGIKA DASHBOARD ADMIN (AMBIL & HAPUS DATA TAMU)
+// LOGIKA DASHBOARD ADMIN
 // ==========================================
 async function fetchGuests() {
     const tbody = document.getElementById('guests-tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '<tr><td colspan="6">Memuat data...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9">Memuat data...</td></tr>';
 
     const { data, error } = await supabaseClient
         .from('guests')
@@ -164,12 +118,12 @@ async function fetchGuests() {
 
     if (error) {
         console.error('Error fetching data:', error);
-        tbody.innerHTML = '<tr><td colspan="6">Gagal memuat data</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9">Gagal memuat data</td></tr>';
         return;
     }
 
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Belum ada data tamu.</td></tr>';
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9">Belum ada data kunjungan.</td></tr>';
         return;
     }
 
@@ -177,290 +131,135 @@ async function fetchGuests() {
     
     data.forEach(guest => {
         const tr = document.createElement('tr');
-        const date = new Date(guest.created_at).toLocaleString('id-ID');
+        const regDate = new Date(guest.created_at).toLocaleString('id-ID');
+        const jamMasuk = guest.jam_masuk ? new Date(guest.jam_masuk).toLocaleTimeString('id-ID') : '-';
+        const jamKeluar = guest.jam_keluar ? new Date(guest.jam_keluar).toLocaleTimeString('id-ID') : '-';
         
-        let statusBadge = guest.status === 'Diberikan Akses' 
-            ? '<span class="status-badge status-diberikan">Diberikan Akses</span>'
-            : '<span class="status-badge status-menunggu">Menunggu</span>';
+        let statusBadge = '<span class="status-badge status-menunggu">Menunggu</span>';
+        if (guest.status === 'Diberikan Akses') {
+            statusBadge = '<span class="status-badge status-diberikan">Akses Diberikan</span>';
+        } else if (guest.status === 'Selesai') {
+            statusBadge = '<span class="status-badge status-selelasi">Selesai</span>';
+        }
 
-        let actionBtn = (guest.status === 'Menunggu Akses' || guest.status === 'Menunggu' || !guest.status)
-            ? `<button onclick="grantAccess('${guest.id}')" class="btn-success btn-xs">Beri Akses</button>`
-            : '<span class="text-muted">Akses Aktif</span>';
+        let actionBtn = '';
+        if (guest.status === 'Menunggu') {
+            actionBtn = `<button onclick="grantAccess('${guest.id}')" class="btn-success">Approve & Masuk</button>`;
+        } else if (guest.status === 'Diberikan Akses' && !guest.jam_keluar) {
+            actionBtn = `<button onclick="setCheckOut('${guest.id}')" class="btn-warning">Catat Keluar</button>`;
+        } else {
+            actionBtn = '<i>Kunjungan Selesai</i>';
+        }
 
         tr.innerHTML = `
-            <td>${date}</td>
+            <td>${regDate}</td>
             <td>${guest.nama}</td>
             <td>${guest.instansi}</td>
+            <td>${guest.jenis_id}</td>
             <td>${guest.keperluan}</td>
+            <td>${jamMasuk}</td>
+            <td>${jamKeluar}</td>
             <td>${statusBadge}</td>
-            <td>
-                <div class="action-buttons">
-                    ${actionBtn}
-                    <button onclick="deleteGuest('${guest.id}')" class="btn-danger btn-xs">Hapus</button>
-                </div>
-            </td>
+            <td>${actionBtn}</td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// Beri Akses Tamu
+// Approve / Beri Akses & Catat Jam Masuk
 async function grantAccess(id) {
+    const now = new Date().toISOString();
     const { error } = await supabaseClient
         .from('guests')
-        .update({ status: 'Diberikan Akses' })
+        .update({ 
+            status: 'Diberikan Akses',
+            jam_masuk: now 
+        })
         .eq('id', id);
 
     if (error) {
-        alert('Gagal mengupdate status: ' + error.message);
+        alert('Gagal mengupdate akses: ' + error.message);
     } else {
         fetchGuests();
     }
 }
 
-// Menghapus Satuan Data Tamu
-async function deleteGuest(id) {
-    if (!confirm('Apakah Anda yakin ingin menghapus data tamu ini?')) return;
-
+// Catat Jam Keluar Tamu
+async function setCheckOut(id) {
+    const now = new Date().toISOString();
     const { error } = await supabaseClient
         .from('guests')
-        .delete()
+        .update({ 
+            status: 'Selesai',
+            jam_keluar: now 
+        })
         .eq('id', id);
 
     if (error) {
-        alert('Gagal menghapus data: ' + error.message);
+        alert('Gagal mencatat jam keluar: ' + error.message);
     } else {
         fetchGuests();
     }
 }
 
-// Menghapus SEMUA Data Tamu
-async function deleteAllGuests() {
-    const confirmMessage = prompt('PERINGATAN! Ketik "HAPUS" untuk mengonfirmasi penghapusan seluruh data tamu:');
-    if (confirmMessage !== 'HAPUS') {
-        alert('Penghapusan dibatalkan.');
+// ==========================================
+// LOGIKA TAMBAH AKUN ADMIN BARU
+// ==========================================
+document.getElementById('add-admin-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('new-admin-email').value;
+    const password = document.getElementById('new-admin-password').value;
+    const messageDiv = document.getElementById('add-admin-message');
+
+    const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        messageDiv.className = 'message error';
+        messageDiv.textContent = 'Gagal menambah admin: ' + error.message;
+    } else {
+        messageDiv.className = 'message success';
+        messageDiv.textContent = 'Akun admin berhasil dibuat! (Pengguna dapat langsung login atau verifikasi email jika diaktifkan).';
+        document.getElementById('add-admin-form').reset();
+    }
+});
+
+// ==========================================
+// LOGIKA RESET & HAPUS KONFIGURASI WEB
+// ==========================================
+async function deleteAllGuestsData() {
+    if (!confirm('Apakah Anda yakin ingin MENGHAPUS SEMUA DATA TAMU? Tindakan ini tidak dapat dibatalkan!')) {
         return;
     }
 
-    // Menghapus seluruh baris data pada tabel guests
     const { error } = await supabaseClient
         .from('guests')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Menghapus semua ID
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Menghapus seluruh baris
 
     if (error) {
-        alert('Gagal menghapus semua data: ' + error.message);
+        alert('Gagal menghapus data: ' + error.message);
     } else {
         alert('Seluruh data tamu berhasil dihapus!');
         fetchGuests();
     }
 }
 
-// Toggle Form Tambah Tamu Manual Admin
-function toggleAdminAddGuest() {
-    const box = document.getElementById('admin-add-guest-box');
-    box.style.display = box.style.display === 'none' ? 'block' : 'none';
-}
-
-// Submit Tambah Tamu Manual Admin
-document.getElementById('admin-guest-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const name = document.getElementById('admin-guest-name').value;
-    const company = document.getElementById('admin-guest-company').value;
-    const purpose = document.getElementById('admin-guest-purpose').value;
-
-    const { error } = await supabaseClient
-        .from('guests')
-        .insert([{ nama: name, instansi: company, keperluan: purpose, status: 'Diberikan Akses' }]);
-
-    if (error) {
-        alert('Gagal menambah data tamu: ' + error.message);
-    } else {
-        alert('Data tamu berhasil ditambahkan!');
-        document.getElementById('admin-guest-form').reset();
-        toggleAdminAddGuest();
-        fetchGuests();
-    }
-});
-
-// ==========================================
-// LOGIKA KONFIGURASI WEB (ADD / EDIT / DELETE CONFIG)
-// ==========================================
-
-// Muat Konfigurasi dari Supabase / LocalStorage
-async function loadConfigurations() {
-    try {
-        const { data, error } = await supabaseClient.from('site_config').select('*');
-        if (!error && data && data.length > 0) {
-            data.forEach(item => {
-                webConfigs[item.key] = item.value;
-            });
-        } else {
-            const localCfg = localStorage.getItem('site_config');
-            if (localCfg) {
-                webConfigs = { ...webConfigs, ...JSON.parse(localCfg) };
-            }
-        }
-    } catch (err) {
-        const localCfg = localStorage.getItem('site_config');
-        if (localCfg) {
-            webConfigs = { ...webConfigs, ...JSON.parse(localCfg) };
-        }
-    }
-    applyConfigToUI();
-}
-
-// Terapkan Konfigurasi ke Tampilan Web
-function applyConfigToUI() {
-    if (webConfigs.site_title) {
-        document.getElementById('site-logo').textContent = webConfigs.site_title;
-        document.getElementById('site-title-tag').textContent = webConfigs.site_title;
-    }
-    if (webConfigs.guest_heading) {
-        document.getElementById('guest-heading').textContent = webConfigs.guest_heading;
-    }
-    if (webConfigs.guest_subheading) {
-        document.getElementById('guest-subheading').textContent = webConfigs.guest_subheading;
-    }
-}
-
-// Isikan Konfigurasi ke Form Admin
-function loadConfigToForm() {
-    document.getElementById('cfg-site-title').value = webConfigs.site_title || '';
-    document.getElementById('cfg-guest-heading').value = webConfigs.guest_heading || '';
-    document.getElementById('cfg-guest-subheading').value = webConfigs.guest_subheading || '';
-    renderConfigTable();
-}
-
-// Simpan Konfigurasi Utama
-document.getElementById('config-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const title = document.getElementById('cfg-site-title').value;
-    const heading = document.getElementById('cfg-guest-heading').value;
-    const subheading = document.getElementById('cfg-guest-subheading').value;
-
-    await saveSingleConfig('site_title', title);
-    await saveSingleConfig('guest_heading', heading);
-    await saveSingleConfig('guest_subheading', subheading);
-
-    alert('Konfigurasi web berhasil disimpan!');
-    loadConfigurations();
-});
-
-// Simpan/Tambah Konfigurasi Kustom (Key-Value)
-document.getElementById('custom-config-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const key = document.getElementById('cfg-key').value.trim();
-    const value = document.getElementById('cfg-value').value.trim();
-
-    if (!key) return;
-
-    await saveSingleConfig(key, value);
-    alert(`Konfigurasi "${key}" berhasil ditambahkan/diperbarui!`);
-    
-    document.getElementById('custom-config-form').reset();
-    loadConfigurations();
-    renderConfigTable();
-});
-
-// Fungsi Pembantu Simpan Konfigurasi Tunggal (Supabase & LocalStorage)
-async function saveSingleConfig(key, value) {
-    webConfigs[key] = value;
-    localStorage.setItem('site_config', JSON.stringify(webConfigs));
-
-    try {
-        await supabaseClient
-            .from('site_config')
-            .upsert([{ key: key, value: value }], { onConflict: 'key' });
-    } catch (e) {
-        console.log('Tabel site_config belum tersedia di Supabase, menyimpan secara lokal.');
-    }
-}
-
-// Menampilkan Tabel Konfigurasi
-function renderConfigTable() {
-    const tbody = document.getElementById('config-tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-
-    const keys = Object.keys(webConfigs);
-    if (keys.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3">Tidak ada konfigurasi tersimpan.</td></tr>';
+function resetWebConfig() {
+    if (!confirm('Apakah Anda yakin ingin mereset konfigurasi & cache lokal web ini?')) {
         return;
     }
 
-    keys.forEach(key => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><code>${key}</code></td>
-            <td>${webConfigs[key]}</td>
-            <td>
-                <button onclick="deleteConfig('${key}')" class="btn-danger btn-xs">Hapus</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+    // Clear Local Storage & Session Storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    alert('Konfigurasi web berhasil direset.');
+    window.location.reload();
 }
 
-// Menghapus Konfigurasi Spesifik
-async function deleteConfig(key) {
-    if (!confirm(`Apakah Anda yakin ingin menghapus konfigurasi "${key}"?`)) return;
-
-    delete webConfigs[key];
-    localStorage.setItem('site_config', JSON.stringify(webConfigs));
-
-    try {
-        await supabaseClient
-            .from('site_config')
-            .delete()
-            .eq('key', key);
-    } catch (e) {
-        console.log('Proses hapus konfigurasi lokal selesai.');
-    }
-
-    alert(`Konfigurasi "${key}" telah dihapus.`);
-    loadConfigurations();
-    renderConfigTable();
-}
-
-// Reset Semua Konfigurasi ke Default
-async function resetAllConfigs() {
-    if (!confirm('Apakah Anda yakin ingin mengembalikan semua konfigurasi ke kondisi awal (Default)?')) return;
-
-    webConfigs = {
-        site_title: 'CompanySpace',
-        guest_heading: 'Form Registrasi Tamu',
-        guest_subheading: 'Silakan isi data diri Anda. Admin akan memberikan akses setelah data diverifikasi.'
-    };
-
-    localStorage.removeItem('site_config');
-
-    try {
-        await supabaseClient.from('site_config').delete().neq('key', '');
-    } catch (e) {
-        console.log('Reset konfigurasi lokal.');
-    }
-
-    alert('Semua konfigurasi berhasil di-reset!');
-    loadConfigurations();
-    loadConfigToForm();
-}
-
-// FITUR REALTIME DATABASE
-function subscribeRealtimeGuests() {
-    supabaseClient
-        .channel('public:guests')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'guests' }, () => {
-            fetchGuests();
-        })
-        .subscribe();
-}
-
-// Inisialisasi awal
-loadConfigurations();
-checkInitialAuth();
-subscribeRealtimeGuests();
+// Inisialisasi saat pertama kali halaman dimuat
+checkAuthStatus();

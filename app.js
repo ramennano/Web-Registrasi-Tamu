@@ -6,242 +6,200 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// State Aplikasi
+// ==========================================
+// BILINGUAL DICTIONARY (ID & EN)
+// ==========================================
 let currentLang = 'id';
-let currentAdminUser = null;
-
-// ==========================================
-// DICTIONARY DUA BAHASA (ID & EN)
-// ==========================================
-const translations = {
+const i18n = {
     id: {
         navHome: "Beranda",
-        navGuest: "Dashboard Tamu",
         navLogin: "Login Admin",
         navLogout: "Logout",
-        welcomeTitle: "Selamat Datang di Portal Tamu Perusahaan",
-        welcomeDesc: "Silakan daftar kunjungan Anda atau periksa status persetujuan akses yang telah diajukan.",
+        welcomeTitle: "Selamat Datang di Portal Tamu",
+        welcomeSub: "Silakan daftarkan kunjungan Anda atau periksa status persetujuan akses yang telah diajukan.",
         btnGetStarted: "Get Started (Registrasi Tamu)",
-        btnCheckStatus: "Cek Status Approve Tamu",
-        checkStatusTitle: "🔍 Periksa Status Persetujuan Tamu",
-        checkStatusSub: "Masukkan Nomor Registrasi / ID Tamu Anda di bawah ini:",
-        btnCheck: "Cek Status",
-        regFormTitle: "Formulir Registrasi Kunjungan Tamu",
-        lblFullName: "Nama Lengkap",
-        lblIdType: "Jenis ID",
-        lblIdNumber: "Nomor ID / Identitas",
-        lblInstansiType: "Kategori Asal Instansi/Perusahaan",
-        optApproved: "Pilih dari Daftar PT Disetujui",
-        optManual: "Input Manual Nama Perusahaan",
-        lblApprovedCompany: "Daftar Perusahaan Disetujui",
-        lblManualCompany: "Nama Instansi / Perusahaan (Manual)",
-        lblPurpose: "Keperluan / Tujuan Kunjungan",
-        btnSubmitReg: "Kirim Pendaftaran Tamu",
-        adminLoginTitle: "Login Administrator",
-        adminLoginSub: "Masuk dengan Username & Password admin Anda",
-        lblUsername: "Username",
-        lblPassword: "Password",
-        btnLogin: "Login Admin",
-        adminDashTitle: "Panel Kontrol Administrator",
+        btnCheckStatus: "Cek Status Approval",
+        regTitle: "Formulir Pendaftaran Tamu",
+        labelFullName: "Nama Lengkap",
+        labelIdType: "Jenis ID Card",
+        labelIdNum: "Nomor Identitas (ID)",
+        labelCompanyType: "Asal Instansi/Perusahaan",
+        selectCompany: "-- Pilih PT Terdaftar --",
+        optionManual: "+ Input Manual Nama Perusahaan",
+        labelManualCompany: "Masukkan Nama Instansi/PT Manual",
+        labelPurpose: "Keperluan Kunjungan",
+        btnRegisterSubmit: "Kirim Pendaftaran",
+        btnBack: "Kembali",
+        regSuccessTitle: "Registrasi Berhasil!",
+        regSuccessSub: "Simpan Nomor Registrasi berikut untuk mengecek status approval Anda:",
+        checkTitle: "Cek Status Approval Tamu",
+        btnSearch: "Periksa Status",
         tabGuests: "Daftar Tamu",
-        tabCompanies: "Master PT Disetujui",
-        tabUsers: "Akun Admin & Password",
-        tabBranding: "Logo & Wallpaper",
-        titleGuestList: "Daftar Permohonan & Kunjungan Tamu",
-        titleAddCompany: "Tambah Nama PT / Instansi yang Disetujui",
-        btnAddCompany: "Tambah PT",
-        titleCompanyList: "Daftar PT Terdaftar",
-        titleAddAdmin: "Tambah Akun Login Admin Baru",
-        lblNewUsername: "Username Baru",
-        lblNewPassword: "Password Baru",
-        btnAddAdmin: "Buat Akun Admin",
-        titleResetPass: "Reset Password Akun Admin",
-        lblSelectAdmin: "Pilih Akun Admin",
-        lblResetPass: "Password Baru",
-        btnResetPass: "Reset Password",
-        titleBranding: "Pengaturan Logo & Wallpaper Website",
-        descBranding: "Unggah gambar dari komputer/perangkat lokal Anda untuk mengubah tampilan website.",
-        lblLogoUpload: "Upload Logo Perusahaan",
-        lblBgUpload: "Upload Wallpaper Background",
-        btnResetBranding: "Reset ke Tampilan Default"
+        tabUsers: "Manajemen Akun",
+        tabCompanies: "Kelola Nama PT",
+        tabBranding: "Ubah Tampilan/Logo",
+        guestListTitle: "Persetujuan Registrasi Tamu",
+        loginTitle: "Login Administrator",
+        btnLoginSubmit: "Masuk"
     },
     en: {
         navHome: "Home",
-        navGuest: "Guest Dashboard",
         navLogin: "Admin Login",
         navLogout: "Logout",
-        welcomeTitle: "Welcome to Company Guest Portal",
-        welcomeDesc: "Please register your visit or check your approved access status.",
+        welcomeTitle: "Welcome to Guest Portal",
+        welcomeSub: "Please register your visit or check your access approval status.",
         btnGetStarted: "Get Started (Guest Registration)",
-        btnCheckStatus: "Check Guest Approval Status",
-        checkStatusTitle: "🔍 Check Guest Approval Status",
-        checkStatusSub: "Enter your Registration Number / Guest ID below:",
-        btnCheck: "Check Status",
-        regFormTitle: "Guest Visit Registration Form",
-        lblFullName: "Full Name",
-        lblIdType: "ID Type",
-        lblIdNumber: "ID Number",
-        lblInstansiType: "Company / Institution Category",
-        optApproved: "Select from Approved PT List",
-        optManual: "Manual Company Input",
-        lblApprovedCompany: "Approved Company List",
-        lblManualCompany: "Company / Institution Name (Manual)",
-        lblPurpose: "Purpose of Visit",
-        btnSubmitReg: "Submit Registration",
-        adminLoginTitle: "Administrator Login",
-        adminLoginSub: "Log in using your admin Username & Password",
-        lblUsername: "Username",
-        lblPassword: "Password",
-        btnLogin: "Login",
-        adminDashTitle: "Administrator Control Panel",
+        btnCheckStatus: "Check Approval Status",
+        regTitle: "Guest Registration Form",
+        labelFullName: "Full Name",
+        labelIdType: "ID Card Type",
+        labelIdNum: "ID Number",
+        labelCompanyType: "Company / Institution",
+        selectCompany: "-- Select Registered Company --",
+        optionManual: "+ Enter Company Name Manually",
+        labelManualCompany: "Enter Manual Company Name",
+        labelPurpose: "Purpose of Visit",
+        btnRegisterSubmit: "Submit Registration",
+        btnBack: "Back",
+        regSuccessTitle: "Registration Successful!",
+        regSuccessSub: "Save the following Registration Number to check your status:",
+        checkTitle: "Check Guest Approval Status",
+        btnSearch: "Search Status",
         tabGuests: "Guest List",
-        tabCompanies: "Approved PT Master",
-        tabUsers: "Admin Accounts & Passwords",
-        tabBranding: "Logo & Wallpaper",
-        titleGuestList: "Guest Request & Visit List",
-        titleAddCompany: "Add Approved Company / PT Name",
-        btnAddCompany: "Add PT",
-        titleCompanyList: "Registered PT List",
-        titleAddAdmin: "Add New Admin Account",
-        lblNewUsername: "New Username",
-        lblNewPassword: "New Password",
-        btnAddAdmin: "Create Admin Account",
-        titleResetPass: "Reset Admin Password",
-        lblSelectAdmin: "Select Admin Account",
-        lblResetPass: "New Password",
-        btnResetPass: "Reset Password",
-        titleBranding: "Website Logo & Wallpaper Settings",
-        descBranding: "Upload images from your local computer to customize the website branding.",
-        lblLogoUpload: "Upload Company Logo",
-        lblBgUpload: "Upload Wallpaper Background",
-        btnResetBranding: "Reset to Default View"
+        tabUsers: "Account Management",
+        tabCompanies: "Manage Companies",
+        tabBranding: "Custom Branding/Logo",
+        guestListTitle: "Guest Registration Approvals",
+        loginTitle: "Administrator Login",
+        btnLoginSubmit: "Sign In"
     }
 };
 
-// Bahasa Switcher
-function setLanguage(lang) {
+function switchLanguage(lang) {
     currentLang = lang;
-    document.getElementById('btn-lang-id').classList.toggle('active', lang === 'id');
-    document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`lang-${lang}`).classList.add('active');
 
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (translations[lang][key]) {
-            el.textContent = translations[lang][key];
+    document.querySelectorAll('[data-i18n]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n');
+        if (i18n[lang][key]) {
+            elem.textContent = i18n[lang][key];
         }
     });
 }
 
 // ==========================================
-// NAVIGASI HALAMAN & TABS
+// STATE MANAGEMENT & NAVIGATION
 // ==========================================
-function showPage(pageId) {
-    document.querySelectorAll('.page-section').forEach(section => {
-        section.classList.remove('active');
-    });
-    document.getElementById(pageId).classList.add('active');
+let currentUser = null; // Stored user login session
 
-    if (pageId === 'guest-dashboard') {
+function showSection(sectionId) {
+    document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+
+    if (sectionId === 'register-section') {
         loadApprovedCompanies();
-    } else if (pageId === 'admin-dashboard') {
-        if (!currentAdminUser) {
-            showPage('login-page');
-            return;
-        }
-        loadAdminData();
     }
 }
 
-function focusCheckStatus() {
-    showPage('guest-dashboard');
-    document.getElementById('check-reg-input').focus();
-}
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(tb => tb.classList.remove('active'));
 
-function switchAdminTab(tabId) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-
-    event.target.classList.add('active');
     document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
+
+    if (tabId === 'tab-users') fetchAdminUsers();
+    if (tabId === 'tab-companies') fetchCompanies();
 }
 
 // ==========================================
-// REGISTRASI & CEK STATUS TAMU
+// LOGIKA REGISTRASI TAMU
 // ==========================================
-function toggleInstansiInput() {
-    const type = document.getElementById('instansi-type-select').value;
-    document.getElementById('approved-company-group').style.display = type === 'approved' ? 'block' : 'none';
-    document.getElementById('manual-company-group').style.display = type === 'manual' ? 'block' : 'none';
-}
-
 async function loadApprovedCompanies() {
-    const select = document.getElementById('guest-company-select');
-    const { data, error } = await supabaseClient.from('approved_companies').select('*').order('name');
-    
+    const select = document.getElementById('reg-company-select');
+    select.innerHTML = `<option value="">${i18n[currentLang].selectCompany}</option>`;
+
+    const { data, error } = await supabaseClient.from('approved_companies').select('*').order('nama_pt');
     if (!error && data) {
-        select.innerHTML = '<option value="">-- Pilih Perusahaan / PT --</option>';
-        data.forEach(c => {
-            select.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+        data.forEach(pt => {
+            const opt = document.createElement('option');
+            opt.value = pt.nama_pt;
+            opt.textContent = pt.nama_pt;
+            select.appendChild(opt);
         });
     }
+
+    const optManual = document.createElement('option');
+    optManual.value = "MANUAL";
+    optManual.textContent = i18n[currentLang].optionManual;
+    select.appendChild(optManual);
 }
 
-// Registrasi Tamu
-document.getElementById('guest-form').addEventListener('submit', async (e) => {
+function toggleManualCompany(val) {
+    const group = document.getElementById('manual-company-group');
+    group.style.display = (val === 'MANUAL') ? 'block' : 'none';
+}
+
+function generateRegNumber() {
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `REG-${dateStr}-${randomNum}`;
+}
+
+document.getElementById('guest-register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const messageBox = document.getElementById('guest-form-message');
 
-    const name = document.getElementById('guest-name').value;
-    const idType = document.getElementById('guest-id-type').value;
-    const idNum = document.getElementById('guest-id-num').value;
-    const instansiType = document.getElementById('instansi-type-select').value;
-    
-    let instansi = instansiType === 'approved' 
-        ? document.getElementById('guest-company-select').value 
-        : document.getElementById('guest-company-manual').value;
+    const name = document.getElementById('reg-name').value;
+    const idType = document.getElementById('reg-id-type').value;
+    const idNum = document.getElementById('reg-id-num').value;
+    const companySelect = document.getElementById('reg-company-select').value;
+    const companyManual = document.getElementById('reg-company-manual').value;
+    const purpose = document.getElementById('reg-purpose').value;
 
-    if (!instansi) {
-        alert(currentLang === 'id' ? 'Silakan pilih atau isi instansi perusahaan Anda.' : 'Please select or enter your company name.');
+    let finalCompany = companySelect;
+    let compType = 'terdaftar';
+
+    if (companySelect === 'MANUAL') {
+        finalCompany = companyManual;
+        compType = 'manual';
+    }
+
+    if (!finalCompany) {
+        alert('Silakan tentukan asal instansi/perusahaan!');
         return;
     }
 
-    const purpose = document.getElementById('guest-purpose').value;
-    const regNum = 'REG-' + Math.floor(100000 + Math.random() * 900000);
+    const regNum = generateRegNumber();
 
     const { error } = await supabaseClient.from('guests').insert([{
         reg_number: regNum,
         nama: name,
         jenis_id: idType,
         no_id: idNum,
-        instansi_type: instansiType,
-        instansi: instansi,
+        instansi_type: compType,
+        instansi_nama: finalCompany,
         keperluan: purpose,
         status: 'Menunggu Akses'
     }]);
 
     if (error) {
-        messageBox.className = 'alert-box error';
-        messageBox.style.display = 'block';
-        messageBox.textContent = currentLang === 'id' ? 'Gagal pendaftaran: ' + error.message : 'Registration failed: ' + error.message;
+        alert('Gagal mendaftar: ' + error.message);
     } else {
-        messageBox.className = 'alert-box success';
-        messageBox.style.display = 'block';
-        messageBox.innerHTML = currentLang === 'id' 
-            ? `<strong>Registrasi Berhasil!</strong><br>Nomor Registrasi Tamu Anda: <b>${regNum}</b><br>Simpan nomor ini untuk mengecek status akses Anda.`
-            : `<strong>Registration Successful!</strong><br>Your Registration ID: <b>${regNum}</b><br>Save this ID to check your access status.`;
-        
-        document.getElementById('guest-form').reset();
-        document.getElementById('check-reg-input').value = regNum;
+        document.getElementById('guest-register-form').reset();
+        document.getElementById('manual-company-group').style.display = 'none';
+        document.getElementById('display-reg-num').textContent = regNum;
+        document.getElementById('reg-success-box').style.display = 'block';
     }
 });
 
-// Cek Status Tamu berdasarkan No Registrasi
+// ==========================================
+// LOGIKA CEK STATUS APPROVAL TAMU
+// ==========================================
 async function checkGuestStatus() {
-    const regInput = document.getElementById('check-reg-input').value.trim();
-    const resultBox = document.getElementById('status-result-box');
-
+    const regInput = document.getElementById('search-reg-id').value.trim();
     if (!regInput) {
-        alert(currentLang === 'id' ? 'Masukkan Nomor Registrasi / ID Tamu' : 'Please enter Registration ID');
+        alert('Masukkan Nomor Registrasi!');
         return;
     }
 
@@ -251,251 +209,326 @@ async function checkGuestStatus() {
         .eq('reg_number', regInput)
         .single();
 
-    resultBox.style.display = 'block';
+    const card = document.getElementById('status-result-card');
 
     if (error || !data) {
-        resultBox.className = 'status-result status-rejected';
-        resultBox.innerHTML = currentLang === 'id' 
-            ? `❌ <b>Data tidak ditemukan!</b> Silakan periksa kembali Nomor Registrasi / ID Tamu Anda.` 
-            : `❌ <b>Record not found!</b> Please check your Registration ID.`;
+        alert('Data registrasi tidak ditemukan! Periksa kembali nomor registrasi Anda.');
+        card.style.display = 'none';
         return;
     }
 
-    let statusClass = 'status-pending';
-    let statusText = data.status;
+    card.style.display = 'block';
+    document.getElementById('res-reg-id').textContent = data.reg_number;
+    document.getElementById('res-nama').textContent = data.nama;
+    document.getElementById('res-id-type').textContent = data.jenis_id;
+    document.getElementById('res-id-num').textContent = data.no_id;
+    document.getElementById('res-instansi').textContent = data.instansi_nama;
+    document.getElementById('res-purpose').textContent = data.keperluan;
+    document.getElementById('res-date').textContent = new Date(data.created_at).toLocaleString('id-ID');
 
-    if (data.status === 'Diberikan Akses') statusClass = 'status-granted';
-    else if (data.status === 'Ditolak') statusClass = 'status-rejected';
+    const badge = document.getElementById('res-status-badge');
+    const banner = document.getElementById('res-notif-banner');
 
-    resultBox.className = `status-result ${statusClass}`;
-    resultBox.innerHTML = `
-        <p><strong>Status Akses:</strong> <span class="badge">${statusText}</span></p>
-        <p><strong>No Registrasi:</strong> ${data.reg_number}</p>
-        <p><strong>Nama Tamu:</strong> ${data.nama}</p>
-        <p><strong>Asal Instansi:</strong> ${data.instansi}</p>
-        <p><strong>Keperluan:</strong> ${data.keperluan}</p>
-    `;
+    badge.className = 'status-pill';
+    if (data.status === 'Disetujui') {
+        badge.classList.add('status-disetujui');
+        badge.textContent = 'DISETUJUI / DIBERI AKSES';
+        banner.className = 'status-banner alert-box success';
+        banner.textContent = '🎉 SELAMAT! Permintaan akses Anda telah DISETUI. Silakan menunjukkan bukti ini ke Resepsionis/SATPAM.';
+    } else if (data.status === 'Ditolak') {
+        badge.classList.add('status-ditolak');
+        badge.textContent = 'DITOLAK';
+        banner.className = 'status-banner alert-box error';
+        banner.textContent = '❌ Mohon maaf, permintaan kunjungan Anda ditolak oleh Admin.';
+    } else {
+        badge.classList.add('status-menunggu');
+        badge.textContent = 'MENUNGGU APPROVAL';
+        banner.className = 'status-banner alert-box';
+        banner.style.background = '#fef3c7';
+        banner.style.color = '#92400e';
+        banner.textContent = '⏳ Permintaan kunjungan Anda sedang diproses oleh Admin. Silakan cek berkala.';
+    }
 }
 
 // ==========================================
-// MANAJEMEN ADMIN (LOGIN, AKUN & RESET PASS)
+// LOGIKA AUTENTIKASI ADMIN / SUPER ADMIN
 // ==========================================
-document.getElementById('login-form').addEventListener('submit', async (e) => {
+function openLoginModal() {
+    document.getElementById('login-modal').style.display = 'flex';
+}
+
+function closeLoginModal() {
+    document.getElementById('login-modal').style.display = 'none';
+}
+
+document.getElementById('login-admin-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const user = document.getElementById('admin-username').value;
-    const pass = document.getElementById('admin-password').value;
-    const msgBox = document.getElementById('login-message');
+    const userInp = document.getElementById('login-username').value.trim();
+    const passInp = document.getElementById('login-password').value.trim();
+    const errBox = document.getElementById('login-error-msg');
 
     const { data, error } = await supabaseClient
         .from('admin_users')
         .select('*')
-        .eq('username', user)
-        .eq('password_text', pass)
+        .eq('username', userInp)
+        .eq('password', passInp)
         .single();
 
     if (error || !data) {
-        msgBox.style.display = 'block';
-        msgBox.textContent = currentLang === 'id' ? 'Username atau password admin salah!' : 'Invalid username or password!';
+        errBox.style.display = 'block';
+        errBox.textContent = 'Username atau Password salah!';
     } else {
-        msgBox.style.display = 'none';
-        currentAdminUser = data.username;
-        document.getElementById('nav-login-btn').style.display = 'none';
-        document.getElementById('nav-logout-btn').style.display = 'inline-block';
-        document.getElementById('login-form').reset();
-        showPage('admin-dashboard');
+        currentUser = data;
+        errBox.style.display = 'none';
+        closeLoginModal();
+        document.getElementById('login-admin-form').reset();
+        
+        // Update Nav UI
+        document.getElementById('btn-login-modal').style.display = 'none';
+        document.getElementById('btn-logout').style.display = 'inline-block';
+        document.getElementById('user-role-badge').textContent = data.role.toUpperCase();
+
+        // Show/Hide Super Admin Features
+        const superBtns = document.querySelectorAll('.superadmin-only');
+        superBtns.forEach(el => {
+            el.style.display = (data.role === 'super_admin') ? 'inline-block' : 'none';
+        });
+
+        showSection('admin-dashboard-section');
+        fetchDashboardGuests();
     }
 });
 
 function logoutAdmin() {
-    currentAdminUser = null;
-    document.getElementById('nav-login-btn').style.display = 'inline-block';
-    document.getElementById('nav-logout-btn').style.display = 'none';
-    showPage('landing-page');
+    currentUser = null;
+    document.getElementById('btn-login-modal').style.display = 'inline-block';
+    document.getElementById('btn-logout').style.display = 'none';
+    showSection('landing-section');
 }
 
-// Load Semua Data Admin Tab
-async function loadAdminData() {
-    fetchGuestList();
-    fetchCompanyList();
-    fetchAdminList();
-}
+// ==========================================
+// LOGIKA DASHBOARD ADMIN (APPROVAL)
+// ==========================================
+async function fetchDashboardGuests() {
+    const tbody = document.getElementById('admin-guest-tbody');
+    tbody.innerHTML = '<tr><td colspan="6">Memuat data...</td></tr>';
 
-// 1. Fetch Tamu
-async function fetchGuestList() {
-    const tbody = document.getElementById('admin-guests-tbody');
-    tbody.innerHTML = '<tr><td colspan="8">Memuat data tamu...</td></tr>';
+    const { data, error } = await supabaseClient
+        .from('guests')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    const { data } = await supabaseClient.from('guests').select('*').order('created_at', { ascending: false });
-
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8">Belum ada pendaftaran tamu.</td></tr>';
+    if (error) {
+        tbody.innerHTML = '<tr><td colspan="6">Gagal memuat data</td></tr>';
         return;
     }
 
     tbody.innerHTML = '';
-    data.forEach(g => {
-        const date = new Date(g.created_at).toLocaleString('id-ID');
+    data.forEach(item => {
         const tr = document.createElement('tr');
         
-        let actionBtns = `
-            <button onclick="updateGuestStatus('${g.id}', 'Diberikan Akses')" class="btn-primary" style="padding:0.3rem 0.6rem; font-size:0.8rem;">Setujui</button>
-            <button onclick="updateGuestStatus('${g.id}', 'Ditolak')" class="btn-danger" style="padding:0.3rem 0.6rem; font-size:0.8rem;">Tolak</button>
+        let statusPill = `<span class="status-pill status-menunggu">Menunggu</span>`;
+        if (item.status === 'Disetujui') statusPill = `<span class="status-pill status-disetujui">Disetujui</span>`;
+        if (item.status === 'Ditolak') statusPill = `<span class="status-pill status-ditolak">Ditolak</span>`;
+
+        let actions = `
+            <button onclick="updateGuestStatus('${item.id}', 'Disetujui')" class="btn-submit" style="padding:4px 8px; font-size:0.8rem;">Approve</button>
+            <button onclick="updateGuestStatus('${item.id}', 'Ditolak')" class="btn-danger" style="padding:4px 8px; font-size:0.8rem;">Tolak</button>
         `;
 
         tr.innerHTML = `
-            <td><b>${g.reg_number}</b></td>
-            <td>${date}</td>
-            <td>${g.nama}</td>
-            <td>${g.jenis_id} - ${g.no_id}</td>
-            <td>${g.instansi} (${g.instansi_type})</td>
-            <td>${g.keperluan}</td>
-            <td><b>${g.status}</b></td>
-            <td>${actionBtns}</td>
+            <td><strong>${item.reg_number}</strong><br><small>${new Date(item.created_at).toLocaleString('id-ID')}</small></td>
+            <td>${item.nama}<br><small>${item.jenis_id}: ${item.no_id}</small></td>
+            <td>${item.instansi_nama} (${item.instansi_type})</td>
+            <td>${item.keperluan}</td>
+            <td>${statusPill}</td>
+            <td>${actions}</td>
         `;
         tbody.appendChild(tr);
     });
 }
 
 async function updateGuestStatus(id, newStatus) {
-    await supabaseClient.from('guests').update({ status: newStatus }).eq('id', id);
-    fetchGuestList();
+    const { error } = await supabaseClient
+        .from('guests')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+    if (!error) {
+        fetchDashboardGuests();
+    } else {
+        alert('Gagal memperbarui status: ' + error.message);
+    }
 }
 
-// 2. Fetch & Tambah PT
-async function fetchCompanyList() {
-    const list = document.getElementById('company-list-group');
-    const { data } = await supabaseClient.from('approved_companies').select('*').order('name');
-    
-    list.innerHTML = '';
+// ==========================================
+// LOGIKA SUPER ADMIN (MANAJEMEN AKUN & RESET PASSWORD)
+// ==========================================
+async function fetchAdminUsers() {
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = '<tr><td colspan="4">Memuat user...</td></tr>';
+
+    const { data } = await supabaseClient.from('admin_users').select('*').order('created_at');
+    tbody.innerHTML = '';
+
     if (data) {
-        data.forEach(c => {
-            list.innerHTML += `
-                <li>
-                    <span>${c.name}</span>
-                    <button onclick="deleteCompany('${c.id}')" class="btn-danger" style="padding:0.25rem 0.5rem; font-size:0.8rem;">Hapus</button>
-                </li>
+        data.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${user.username}</td>
+                <td>${user.nama_lengkap}</td>
+                <td><span class="role-badge">${user.role}</span></td>
+                <td>
+                    <button onclick="resetPassword('${user.id}')" class="btn-nav">Reset Password</button>
+                </td>
             `;
+            tbody.appendChild(tr);
+        });
+    }
+}
+
+document.getElementById('add-user-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const u = document.getElementById('new-username').value.trim();
+    const f = document.getElementById('new-fullname').value.trim();
+    const p = document.getElementById('new-password').value.trim();
+    const r = document.getElementById('new-role').value;
+
+    const { error } = await supabaseClient.from('admin_users').insert([{
+        username: u, nama_lengkap: f, password: p, role: r
+    }]);
+
+    if (error) {
+        alert('Gagal menambah akun: ' + error.message);
+    } else {
+        alert('Akun baru berhasil dibuat!');
+        document.getElementById('add-user-form').reset();
+        fetchAdminUsers();
+    }
+});
+
+async function resetPassword(userId) {
+    const newPass = prompt('Masukkan password baru untuk akun ini:');
+    if (!newPass) return;
+
+    const { error } = await supabaseClient.from('admin_users').update({ password: newPass }).eq('id', userId);
+    if (!error) {
+        alert('Password berhasil di-reset!');
+    } else {
+        alert('Gagal mereset password.');
+    }
+}
+
+// ==========================================
+// LOGIKA SUPER ADMIN (KELOLA NAMA PT)
+// ==========================================
+async function fetchCompanies() {
+    const tbody = document.getElementById('companies-tbody');
+    tbody.innerHTML = '<tr><td colspan="2">Memuat data PT...</td></tr>';
+
+    const { data } = await supabaseClient.from('approved_companies').select('*').order('nama_pt');
+    tbody.innerHTML = '';
+
+    if (data) {
+        data.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.nama_pt}</td>
+                <td><button onclick="deleteCompany('${item.id}')" class="btn-danger" style="padding: 2px 8px;">Hapus</button></td>
+            `;
+            tbody.appendChild(tr);
         });
     }
 }
 
 document.getElementById('add-company-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = document.getElementById('new-company-name').value;
-    await supabaseClient.from('approved_companies').insert([{ name }]);
-    document.getElementById('new-company-name').value = '';
-    fetchCompanyList();
+    const name = document.getElementById('new-company-name').value.trim();
+
+    const { error } = await supabaseClient.from('approved_companies').insert([{ nama_pt: name }]);
+    if (!error) {
+        document.getElementById('add-company-form').reset();
+        fetchCompanies();
+    } else {
+        alert('Gagal menambah PT: ' + error.message);
+    }
 });
 
 async function deleteCompany(id) {
+    if (!confirm('Yakin ingin menghapus PT ini?')) return;
     await supabaseClient.from('approved_companies').delete().eq('id', id);
-    fetchCompanyList();
+    fetchCompanies();
 }
 
-// 3. Tambah & Reset Pass Admin
-async function fetchAdminList() {
-    const select = document.getElementById('reset-admin-select');
-    const { data } = await supabaseClient.from('admin_users').select('*').order('username');
-    
-    select.innerHTML = '';
+// ==========================================
+// LOGIKA SUPER ADMIN (KUSTOMISASI BRANDING LOGO & WALLPAPER)
+// ==========================================
+document.getElementById('upload-logo').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function (evt) {
+        const base64Img = evt.target.result;
+        applyLogo(base64Img);
+        saveConfig('logo_url', base64Img);
+    };
+    reader.readAsDataURL(file);
+});
+
+document.getElementById('upload-wallpaper').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function (evt) {
+        const base64Bg = evt.target.result;
+        applyWallpaper(base64Bg);
+        saveConfig('wallpaper_url', base64Bg);
+    };
+    reader.readAsDataURL(file);
+});
+
+function applyLogo(url) {
+    const img = document.getElementById('nav-logo');
+    if (url) {
+        img.src = url;
+        img.style.display = 'block';
+    } else {
+        img.style.display = 'none';
+    }
+}
+
+function applyWallpaper(url) {
+    if (url) {
+        document.documentElement.style.setProperty('--bg-wallpaper-url', `url('${url}')`);
+    } else {
+        document.documentElement.style.setProperty('--bg-wallpaper-url', 'none');
+    }
+}
+
+async function saveConfig(key, val) {
+    await supabaseClient.from('site_config').upsert({ key: key, value: val, updated_at: new Date() });
+}
+
+async function loadSiteConfig() {
+    const { data } = await supabaseClient.from('site_config').select('*');
     if (data) {
-        data.forEach(u => {
-            select.innerHTML += `<option value="${u.id}">${u.username}</option>`;
+        data.forEach(item => {
+            if (item.key === 'logo_url' && item.value) applyLogo(item.value);
+            if (item.key === 'wallpaper_url' && item.value) applyWallpaper(item.value);
         });
     }
 }
 
-document.getElementById('add-admin-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('new-admin-user').value;
-    const password_text = document.getElementById('new-admin-pass').value;
-
-    const { error } = await supabaseClient.from('admin_users').insert([{ username, password_text }]);
-    if (error) alert('Gagal menambah admin: ' + error.message);
-    else {
-        alert('Akun Admin berhasil dibuat!');
-        document.getElementById('add-admin-form').reset();
-        fetchAdminList();
-    }
-});
-
-document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('reset-admin-select').value;
-    const newPass = document.getElementById('reset-admin-pass').value;
-
-    const { error } = await supabaseClient.from('admin_users').update({ password_text: newPass }).eq('id', id);
-    if (error) alert('Gagal reset password: ' + error.message);
-    else {
-        alert('Password admin berhasil diperbarui!');
-        document.getElementById('reset-password-form').reset();
-    }
-});
-
-// ==========================================
-// BRANDING (UPLOAD LOGO & WALLPAPER LOKAL)
-// ==========================================
-function handleLogoUpload(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (event) {
-            const base64Img = event.target.result;
-            document.getElementById('logo-preview').src = base64Img;
-            document.getElementById('logo-preview').style.display = 'block';
-            saveBrandingSetting('logo', base64Img);
-        };
-        reader.readAsDataURL(file);
-    }
+async function resetBrandingConfig() {
+    if (!confirm('Yakin ingin meriset logo dan wallpaper kembali ke default?')) return;
+    await saveConfig('logo_url', '');
+    await saveConfig('wallpaper_url', '');
+    applyLogo('');
+    applyWallpaper('');
+    alert('Tampilan berhasil direset!');
 }
 
-function handleWallpaperUpload(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (event) {
-            const base64Img = event.target.result;
-            document.getElementById('bg-preview').src = base64Img;
-            document.getElementById('bg-preview').style.display = 'block';
-            saveBrandingSetting('wallpaper', base64Img);
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-async function saveBrandingSetting(type, dataUrl) {
-    const payload = type === 'logo' ? { logo_data: dataUrl } : { wallpaper_data: dataUrl };
-    await supabaseClient.from('site_settings').update(payload).eq('id', 1);
-    applyBranding();
-}
-
-async function applyBranding() {
-    const { data } = await supabaseClient.from('site_settings').select('*').eq('id', 1).single();
-    if (data) {
-        if (data.logo_data) {
-            const logoImg = document.getElementById('site-logo');
-            logoImg.src = data.logo_data;
-            logoImg.style.display = 'block';
-            document.getElementById('logo-preview').src = data.logo_data;
-            document.getElementById('logo-preview').style.display = 'block';
-        }
-        if (data.wallpaper_data) {
-            document.body.style.backgroundImage = `url('${data.wallpaper_data}')`;
-            document.getElementById('bg-preview').src = data.wallpaper_data;
-            document.getElementById('bg-preview').style.display = 'block';
-        }
-    }
-}
-
-async function resetBranding() {
-    await supabaseClient.from('site_settings').update({ logo_data: null, wallpaper_data: null }).eq('id', 1);
-    document.getElementById('site-logo').style.display = 'none';
-    document.body.style.backgroundImage = 'none';
-    document.getElementById('logo-preview').style.display = 'none';
-    document.getElementById('bg-preview').style.display = 'none';
-    alert('Branding berhasil direset ke bawaan.');
-}
-
-// Inisialisasi awal
-setLanguage('id');
-applyBranding();
+// Inisialisasi Aplikasi Saat Load
+loadSiteConfig();

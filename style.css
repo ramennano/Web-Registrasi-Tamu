@@ -6,9 +6,7 @@
     --card-bg: #ffffff;
     --border-color: #e5e7eb;
     --danger-color: #ef4444;
-    --danger-hover: #dc2626;
     --success-color: #10b981;
-    --warning-color: #f59e0b;
 }
 
 * {
@@ -42,18 +40,21 @@ body {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 1rem;
-    margin-left: 1rem;
+    font-size: 0.95rem;
+    margin-left: 0.8rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
     color: var(--text-color);
-    font-weight: 500;
+    transition: background 0.2s;
 }
 
 .nav-links button:hover {
+    background-color: #f3f4f6;
     color: var(--primary-color);
 }
 
 .container {
-    max-width: 1100px;
+    max-width: 1000px;
     margin: 2rem auto;
     padding: 0 1rem;
 }
@@ -70,8 +71,14 @@ body {
     display: block;
 }
 
+.header-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
 h2 {
-    margin-bottom: 0.5rem;
     color: #111827;
 }
 
@@ -96,8 +103,7 @@ input, textarea, select {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     outline: none;
-    font-size: 0.95rem;
-    background-color: #fff;
+    background: #fff;
 }
 
 input:focus, textarea:focus, select:focus {
@@ -106,10 +112,10 @@ input:focus, textarea:focus, select:focus {
 
 textarea {
     resize: vertical;
-    min-height: 90px;
+    min-height: 80px;
 }
 
-/* Tombol */
+/* Button Styles */
 .btn-primary {
     background-color: var(--primary-color);
     color: white;
@@ -126,63 +132,77 @@ textarea {
 }
 
 .btn-secondary {
-    background-color: #4b5563;
+    background-color: #4f46e5;
     color: white;
-    padding: 0.5rem 1rem;
+    padding: 0.6rem 1.2rem;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.9rem;
 }
 
 .btn-secondary:hover {
-    background-color: #374151;
+    background-color: #4338ca;
 }
 
-.btn-success {
+.btn-approve {
     background-color: var(--success-color);
     color: white;
-    padding: 0.4rem 0.8rem;
     border: none;
+    padding: 0.35rem 0.7rem;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.85rem;
-    margin-right: 4px;
+    margin-right: 0.3rem;
 }
 
-.btn-success:hover {
-    background-color: #059669;
-}
-
-.btn-danger {
+.btn-reject {
     background-color: var(--danger-color);
     color: white;
-    padding: 0.5rem 1rem;
     border: none;
+    padding: 0.35rem 0.7rem;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.85rem;
+    margin-right: 0.3rem;
 }
 
-.btn-danger:hover {
-    background-color: var(--danger-hover);
+.btn-checkout {
+    background-color: #f59e0b;
+    color: white;
+    border: none;
+    padding: 0.35rem 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
-/* Header & Tabel Dashboard */
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
+.btn-delete {
+    background-color: #9ca3af;
+    color: white;
+    border: none;
+    padding: 0.35rem 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
-.dashboard-actions {
-    display: flex;
-    gap: 0.5rem;
+/* Messages */
+.message {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 4px;
+    display: none;
 }
 
+.message.success {
+    display: block;
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.message.error {
+    display: block;
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Tabel */
 .table-container {
     overflow-x: auto;
 }
@@ -190,12 +210,12 @@ textarea {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 0.5rem;
+    margin-top: 1rem;
     font-size: 0.9rem;
 }
 
 th, td {
-    padding: 0.85rem 0.75rem;
+    padding: 0.75rem 0.5rem;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
@@ -205,68 +225,39 @@ th {
     font-weight: 600;
 }
 
-/* Status Badge */
+/* Status Badges */
 .status-badge {
     padding: 0.25rem 0.6rem;
     border-radius: 999px;
     font-size: 0.8rem;
     font-weight: 600;
-    display: inline-block;
 }
 
-.status-menunggu {
-    background-color: #fef3c7;
-    color: #92400e;
-}
+.status-menunggu { background-color: #fef3c7; color: #92400e; }
+.status-disetujui { background-color: #d1fae5; color: #065f46; }
+.status-ditolak { background-color: #fee2e2; color: #991b1b; }
+.status-selesai { background-color: #e0f2fe; color: #075985; }
 
-.status-diberikan {
-    background-color: #d1fae5;
-    color: #065f46;
-}
-
-.status-selesai {
-    background-color: #e0e7ff;
-    color: #3730a3;
-}
-
-/* Pesan Notifikasi */
-.message {
-    margin-top: 1rem;
-    padding: 1rem;
-    border-radius: 4px;
-}
-
-.message.success {
-    background-color: #d1fae5;
-    color: #065f46;
-}
-
-.message.error {
-    background-color: #fee2e2;
-    color: #991b1b;
-}
-
-/* Modal Popup */
+/* Modal */
 .modal {
-    display: none; 
-    position: fixed; 
-    z-index: 1000; 
+    display: none;
+    position: fixed;
+    z-index: 1000;
     left: 0;
     top: 0;
-    width: 100%; 
-    height: 100%; 
-    background-color: rgba(0,0,0,0.5); 
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
 }
 
 .modal-content {
-    background-color: #fff;
-    margin: 8% auto;
+    background-color: white;
+    margin: 5% auto;
     padding: 2rem;
     border-radius: 8px;
     width: 90%;
-    max-width: 450px;
+    max-width: 500px;
     position: relative;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
 
 .close-btn {
@@ -274,11 +265,12 @@ th {
     right: 1.2rem;
     top: 1rem;
     font-size: 1.5rem;
-    font-weight: bold;
     cursor: pointer;
-    color: #6b7280;
 }
 
-.close-btn:hover {
-    color: #111827;
+.card-form {
+    background: #f9fafb;
+    padding: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
 }

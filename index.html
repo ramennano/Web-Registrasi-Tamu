@@ -3,50 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Buku Tamu Perusahaan</title>
-    <!-- Memuat Supabase dari CDN -->
+    <title>Sistem Buku Tamu & Dashboard Admin</title>
+    <!-- Memuat Supabase Client dari CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Memuat file CSS eksternal -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- NAVIGASI -->
     <nav class="navbar">
         <div class="logo">CompanySpace</div>
         <div class="nav-links">
             <button onclick="showPage('guest-page')">Buku Tamu</button>
             <button onclick="showPage('login-page')" id="nav-login-btn">Login Admin</button>
-            <button onclick="showPage('admin-dashboard')" id="nav-dashboard-btn" style="display: none;">Dashboard</button>
+            <button onclick="showPage('admin-dashboard')" id="nav-dash-btn" style="display: none;">Dashboard</button>
+            <button onclick="showPage('admin-manage-page')" id="nav-manage-admin-btn" style="display: none;">Kelola Admin</button>
             <button onclick="logoutAdmin()" id="nav-logout-btn" style="display: none;">Logout</button>
         </div>
     </nav>
 
     <div class="container">
         
-        <!-- HALAMAN REGISTRASI TAMU -->
+        <!-- HALAMAN REGISTRASI TAMU (PUBLIC) -->
         <section id="guest-page" class="page-section active">
             <h2>Form Registrasi Tamu</h2>
-            <p>Silakan isi data diri Anda. Admin akan memberikan persetujuan akses setelah data diverifikasi.</p>
+            <p>Silakan isi data diri Anda. Admin akan meverifikasi dan memberikan akses masuk.</p>
             
             <form id="guest-form">
                 <div class="form-group">
                     <label>Nama Lengkap</label>
-                    <input type="text" id="guest-name" required placeholder="Masukkan nama Anda">
+                    <input type="text" id="guest-name" required placeholder="Masukkan nama lengkap">
                 </div>
                 <div class="form-group">
-                    <label>Asal Instansi/Perusahaan</label>
-                    <input type="text" id="guest-company" required placeholder="Contoh: PT Bangun Bangsa">
-                </div>
-                <div class="form-group">
-                    <label>Jenis ID Identity</label>
+                    <label>Jenis ID / Identitas</label>
                     <select id="guest-id-type" required>
-                        <option value="">-- Pilih Jenis ID --</option>
                         <option value="KTP">KTP</option>
                         <option value="SIM">SIM</option>
                         <option value="Paspor">Paspor</option>
                         <option value="Kartu Pelajar/Mahasiswa">Kartu Pelajar/Mahasiswa</option>
                         <option value="Lainnya">Lainnya</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>Asal Instansi/Perusahaan</label>
+                    <input type="text" id="guest-company" required placeholder="Contoh: PT Bangun Bangsa">
                 </div>
                 <div class="form-group">
                     <label>Keperluan</label>
@@ -62,41 +62,38 @@
             <h2>Login Administrator</h2>
             <form id="login-form">
                 <div class="form-group">
-                    <label>Email Admin</label>
-                    <input type="email" id="admin-email" required placeholder="Email Admin">
+                    <label>Username</label>
+                    <input type="text" id="admin-username" required placeholder="Masukkan username admin">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="admin-password" required placeholder="Password">
+                    <input type="password" id="admin-password" required placeholder="Masukkan password">
                 </div>
                 <button type="submit" class="btn-primary">Login</button>
             </form>
-            <div id="login-message" class="message error" style="display: none;"></div>
+            <div id="login-message" class="message error"></div>
         </section>
 
         <!-- HALAMAN DASHBOARD ADMIN -->
         <section id="admin-dashboard" class="page-section">
-            <div class="dashboard-header">
-                <h2>Dashboard Admin - Kelola Buku Tamu</h2>
-                <div class="dashboard-actions">
-                    <button onclick="openAddAdminModal()" class="btn-secondary">+ Tambah Akun Admin</button>
-                    <button onclick="resetAllConfigAndData()" class="btn-danger">Reset / Hapus Semua Data</button>
-                </div>
+            <div class="header-action">
+                <h2>Dashboard Admin - Manajemen Tamu</h2>
+                <button onclick="toggleModal('modal-add-guest', true)" class="btn-secondary">+ Tambah Tamu Manual</button>
             </div>
 
             <div class="table-container">
                 <table id="guests-table">
                     <thead>
                         <tr>
-                            <th>Waktu Register</th>
-                            <th>Nama</th>
-                            <th>Instansi</th>
+                            <th>Waktu Registrasi</th>
+                            <th>Nama Tamu</th>
                             <th>Jenis ID</th>
+                            <th>Instansi / Perusahaan</th>
                             <th>Keperluan</th>
                             <th>Jam Masuk</th>
                             <th>Jam Keluar</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
+                            <th>Status Akses</th>
+                            <th>Aksi Approval</th>
                         </tr>
                     </thead>
                     <tbody id="guests-tbody">
@@ -106,29 +103,87 @@
             </div>
         </section>
 
-    </div>
+        <!-- HALAMAN KELOLA AKUN ADMIN (TANPA REGISTRASI EMAIL) -->
+        <section id="admin-manage-page" class="page-section">
+            <h2>Kelola Akun Login Admin</h2>
+            <p>Tambah akun admin baru langsung dengan username dan password tanpa butuh verifikasi email.</p>
 
-    <!-- MODAL TAMBAH AKUN LOGIN ADMIN -->
-    <div id="add-admin-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeAddAdminModal()">&times;</span>
-            <h3>Tambah Akun Admin Baru</h3>
-            <form id="add-admin-form">
+            <form id="create-admin-form" class="card-form">
+                <h3>Tambah Akun Admin Baru</h3>
                 <div class="form-group">
-                    <label>Email Admin Baru</label>
-                    <input type="email" id="new-admin-email" required placeholder="email@domain.com">
+                    <label>Username Admin Baru</label>
+                    <input type="text" id="new-admin-username" required placeholder="Contoh: admin_operasional">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="new-admin-password" required placeholder="Minimal 6 karakter">
+                    <input type="password" id="new-admin-password" required placeholder="Masukkan password kuat">
                 </div>
-                <button type="submit" class="btn-primary">Buat Akun Login</button>
+                <button type="submit" class="btn-primary">Tambah Akun Admin</button>
+                <div id="create-admin-message" class="message"></div>
             </form>
-            <div id="add-admin-message" class="message" style="display: none;"></div>
+
+            <h3 style="margin-top: 2rem;">Daftar Admin Terdaftar</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Admin</th>
+                            <th>Username</th>
+                            <th>Tanggal Dibuat</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-list-tbody">
+                        <!-- Daftar admin dimuat via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- MODAL TAMBAH TAMU MANUAL OLEH ADMIN -->
+    <div id="modal-add-guest" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleModal('modal-add-guest', false)">&times;</span>
+            <h3>Input Tamu Manual (Admin)</h3>
+            <form id="manual-guest-form">
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" id="manual-name" required placeholder="Nama tamu">
+                </div>
+                <div class="form-group">
+                    <label>Jenis ID</label>
+                    <select id="manual-id-type" required>
+                        <option value="KTP">KTP</option>
+                        <option value="SIM">SIM</option>
+                        <option value="Paspor">Paspor</option>
+                        <option value="Kartu Pelajar/Mahasiswa">Kartu Pelajar/Mahasiswa</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Asal Instansi/Perusahaan</label>
+                    <input type="text" id="manual-company" required placeholder="Instansi/Perusahaan">
+                </div>
+                <div class="form-group">
+                    <label>Keperluan</label>
+                    <textarea id="manual-purpose" required placeholder="Tujuan kunjungan"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Jam Masuk</label>
+                    <input type="datetime-local" id="manual-time-in">
+                </div>
+                <div class="form-group">
+                    <label>Jam Keluar (Opsional)</label>
+                    <input type="datetime-local" id="manual-time-out">
+                </div>
+                <button type="submit" class="btn-primary">Simpan Data Tamu</button>
+            </form>
         </div>
     </div>
 
-    <!-- Memuat file JavaScript eksternal -->
+    <!-- Memuat JavaScript Aplikasi -->
     <script src="app.js"></script>
 </body>
 </html>

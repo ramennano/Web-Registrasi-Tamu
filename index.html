@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Sistem Manajemen Tamu</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body id="app-body">
+    <div class="overlay"></div>
+    <header>
+        <img id="app-logo" src="" alt="Logo" style="display:none; height: 50px;">
+        <h1 id="app-company-name">PT Default Nama</h1>
+    </header>
+
+    <main class="container">
+        <!-- TAMPILAN 1: Bahasa & Get Started -->
+        <section id="view-home" class="view active">
+            <div class="lang-selector">
+                <select id="lang-select" onchange="changeLanguage()">
+                    <option value="id">Indonesia</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            <h2 id="txt-welcome">Selamat Datang</h2>
+            <button class="btn-primary" onclick="showView('view-register')" id="btn-get-started">Get Started (Registrasi Tamu)</button>
+            <br><br>
+            <a href="#" onclick="showView('view-status')" id="link-cek-status">Sudah Registrasi? Cek Status / Login</a>
+        </section>
+
+        <!-- TAMPILAN REGISTRASI TAMU -->
+        <section id="view-register" class="view">
+            <h2 id="txt-reg">Registrasi Tamu</h2>
+            <form id="form-register" onsubmit="handleRegister(event)">
+                <input type="text" id="reg-name" placeholder="Nama Lengkap" required>
+                <select id="reg-id-type" required>
+                    <option value="" disabled selected>Pilih Jenis ID</option>
+                    <option value="KTP">KTP</option>
+                    <option value="SIM">SIM</option>
+                    <option value="PASSPORT">Paspor</option>
+                </select>
+                <!-- Datalist untuk pilihan PT yang disetujui, tapi bisa input manual -->
+                <input type="text" id="reg-company" list="approved-companies" placeholder="Asal Instansi/Perusahaan" required>
+                <datalist id="approved-companies"></datalist>
+                
+                <textarea id="reg-purpose" placeholder="Tujuan Kunjungan" required></textarea>
+                <button type="submit" class="btn-primary">Daftar</button>
+            </form>
+            <button class="btn-back" onclick="showView('view-home')">Kembali</button>
+        </section>
+
+        <!-- TAMPILAN 2: CEK STATUS & LOGIN -->
+        <section id="view-status" class="view">
+            <h2>Cek Status / Login</h2>
+            
+            <div class="card">
+                <h3>Cek Status Kunjungan</h3>
+                <input type="text" id="check-guest-id" placeholder="Masukkan ID Tamu / No Registrasi">
+                <button onclick="checkStatus()" class="btn-secondary">Cek Status</button>
+                <div id="status-result" class="notif" style="display:none;"></div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h3>Admin / Super Admin Login</h3>
+                <input type="text" id="login-username" placeholder="Username">
+                <input type="password" id="login-password" placeholder="Password">
+                <button onclick="handleLogin()" class="btn-primary">Login</button>
+                <a href="#" onclick="showView('view-reset-pass')" style="display:block; margin-top:10px;">Lupa Password?</a>
+            </div>
+
+            <button class="btn-back" onclick="showView('view-home')">Kembali</button>
+        </section>
+
+        <!-- TAMPILAN RESET PASSWORD -->
+        <section id="view-reset-pass" class="view">
+            <h2>Reset Password</h2>
+            <p>Masukkan username dan password baru (Membutuhkan verifikasi dari Super Admin di sistem nyata).</p>
+            <input type="text" id="reset-username" placeholder="Username">
+            <input type="password" id="reset-new-password" placeholder="Password Baru">
+            <button onclick="alert('Permintaan reset password terkirim.')" class="btn-primary">Reset</button>
+            <button class="btn-back" onclick="showView('view-status')">Kembali</button>
+        </section>
+
+        <!-- TAMPILAN SUPER ADMIN DASHBOARD -->
+        <section id="view-superadmin" class="view">
+            <h2>Super Admin Dashboard</h2>
+            <div class="card">
+                <h3>Konfigurasi Website</h3>
+                <input type="text" id="config-pt-name" placeholder="Ubah Nama PT">
+                <p>Ubah Logo:</p>
+                <input type="file" id="config-logo" accept="image/*">
+                <p>Ubah Wallpaper:</p>
+                <input type="file" id="config-wallpaper" accept="image/*">
+                <button onclick="saveConfiguration()" class="btn-primary" style="margin-top: 10px;">Simpan Konfigurasi</button>
+                <button onclick="resetConfiguration()" class="btn-danger" style="margin-top: 10px;">Hapus Semua Konfigurasi</button>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h3>Manajemen Tamu</h3>
+                <button onclick="loadGuestsForSuperAdmin()" class="btn-secondary">Muat Data Tamu</button>
+                <div id="sa-guest-list"></div>
+            </div>
+            <button class="btn-back" onclick="logout()">Logout</button>
+        </section>
+
+        <!-- TAMPILAN ADMIN DASHBOARD -->
+        <section id="view-admin" class="view">
+            <h2>Admin Dashboard</h2>
+            <div class="card">
+                <h3>Daftar Permintaan Kunjungan</h3>
+                <button onclick="loadGuestsForAdmin()" class="btn-secondary">Muat Permintaan</button>
+                <div id="admin-guest-list"></div>
+            </div>
+            <button class="btn-back" onclick="logout()">Logout</button>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

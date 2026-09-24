@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Registrasi Tamu Perusahaan</title>
-    <!-- Supabase JS Client SDK -->
+    <title>Sistem Buku Tamu & Approval Perusahaan</title>
+    <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- FontAwesome Icon -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -14,247 +14,275 @@
 
     <!-- NAVBAR -->
     <nav class="navbar">
-        <div class="logo">
-            <i class="fa-solid fa-building-user"></i> <span id="txt-logo">CompanySpace</span>
+        <div class="navbar-brand">
+            <img id="app-logo" src="https://via.placeholder.com/180x50/2563eb/ffffff?text=CompanyLogo" alt="Logo Perusahaan">
         </div>
         <div class="nav-links">
-            <button onclick="switchLanguage()" id="lang-btn" class="btn-lang"><i class="fa-solid fa-globe"></i> EN</button>
-            <button onclick="showPage('guest-dashboard')" id="nav-guest-btn"><i class="fa-solid fa-house"></i> <span data-key="nav_guest">Dashboard Tamu</span></button>
-            <button onclick="showPage('login-page')" id="nav-login-btn"><i class="fa-solid fa-right-to-bracket"></i> <span data-key="nav_login">Login Admin</span></button>
-            <button onclick="logoutAdmin()" id="nav-logout-btn" style="display: none;"><i class="fa-solid fa-right-from-bracket"></i> <span data-key="nav_logout">Logout</span></button>
+            <button onclick="switchTab('guest-dash')" class="nav-btn active" data-lang="navGuest">Dashboard Tamu</button>
+            <button onclick="switchTab('admin-login-sec')" id="nav-login-btn" class="nav-btn" data-lang="navAdmin">Login Admin</button>
+            <button onclick="logoutAdmin()" id="nav-logout-btn" class="nav-btn btn-danger" style="display:none;" data-lang="navLogout">Logout</button>
+            
+            <!-- LANGUAGE SWITCHER -->
+            <div class="lang-switcher">
+                <button id="lang-id-btn" class="lang-btn active" onclick="setLanguage('id')">🇮🇩 ID</button>
+                <button id="lang-en-btn" class="lang-btn" onclick="setLanguage('en')">🇬🇧 EN</button>
+            </div>
         </div>
     </nav>
 
-    <div class="container">
-        
-        <!-- DASHBOARD TAMU -->
-        <section id="guest-dashboard" class="page-section active">
-            <!-- Hero Section -->
-            <div class="hero-box">
-                <h1 data-key="hero_title">Selamat Datang di Portal Buku Tamu Digital</h1>
-                <p data-key="hero_subtitle">Silakan mendaftarkan kunjungan Anda atau periksa status persetujuan pendaftaran Anda.</p>
-                <div class="hero-actions">
-                    <button onclick="scrollToSection('register-section')" class="btn-hero btn-hero-primary">
-                        <i class="fa-solid fa-user-plus"></i> <span data-key="btn_get_started">Get Started / Register Tamu</span>
-                    </button>
-                    <button onclick="scrollToSection('check-status-section')" class="btn-hero btn-hero-secondary">
-                        <i class="fa-solid fa-magnifying-glass"></i> <span data-key="btn_check_status_hero">Cek Status Persetujuan</span>
-                    </button>
-                </div>
+    <!-- HERO SECTION / DASHBOARD TAMU -->
+    <div id="guest-dash" class="tab-content active">
+        <div class="hero-section">
+            <h1 data-lang="heroTitle">Selamat Datang di Portal Tamu Perusahaan</h1>
+            <p data-lang="heroDesc">Daftarkan kunjungan Anda atau periksa status persetujuan akses dengan cepat dan mudah.</p>
+            <div class="hero-buttons">
+                <a href="#register-form-sec" class="btn-hero" data-lang="btnGetStarted">Get Started</a>
+                <a href="#check-status-sec" class="btn-hero-outline" data-lang="btnCheckStatus">Cek Status Akses</a>
             </div>
+        </div>
 
-            <div class="grid-layout">
-                <!-- FORM REGISTRASI TAMU -->
-                <div id="register-section" class="card">
-                    <h2><i class="fa-solid fa-id-card"></i> <span data-key="title_register">Form Registrasi Tamu</span></h2>
-                    <p data-key="desc_register">Lengkapi data diri Anda untuk mengajukan izin kunjungan.</p>
-                    
-                    <form id="guest-form">
-                        <div class="form-group">
-                            <label data-key="label_name">Nama Lengkap</label>
-                            <input type="text" id="guest-name" required placeholder="Contoh: Budi Santoso">
-                        </div>
+        <div class="container grid-container">
+            <!-- FORM REGISTRASI TAMU -->
+            <div class="card" id="register-form-sec">
+                <h3 class="card-title"><i class="fa-solid fa-user-plus"></i> <span data-lang="formRegTitle">Form Registrasi Tamu</span></h3>
+                <form id="guest-register-form">
+                    <div class="form-group">
+                        <label data-lang="lblFullName">Nama Lengkap</label>
+                        <input type="text" id="reg-name" required placeholder="Masukkan Nama Lengkap">
+                    </div>
 
-                        <div class="form-group">
-                            <label data-key="label_id_type">Jenis ID (Identitas)</label>
-                            <select id="guest-id-type" required>
-                                <option value="KTP">KTP (Kartu Tanda Penduduk)</option>
-                                <option value="SIM">SIM (Surat Izin Mengemudi)</option>
+                    <div class="form-group grid-2">
+                        <div>
+                            <label data-lang="lblIdType">Jenis ID Identity</label>
+                            <select id="reg-id-type" required>
+                                <option value="KTP">KTP</option>
+                                <option value="SIM">SIM</option>
                                 <option value="Paspor">Paspor</option>
-                                <option value="Lainnya">Kartu Identitas Lainnya</option>
+                                <option value="Kartu Pegawai">Kartu Pegawai</option>
+                                <option value="Lainnya">Lainnya</option>
                             </select>
                         </div>
-
-                        <div class="form-group">
-                            <label data-key="label_id_number">Nomor ID / Identitas</label>
-                            <input type="text" id="guest-id-number" required placeholder="Masukkan Nomor KTP / SIM / Paspor">
-                        </div>
-
-                        <div class="form-group">
-                            <label data-key="label_company">Asal Instansi / Perusahaan</label>
-                            <select id="guest-company-select" onchange="toggleManualCompany(this.value)" required>
-                                <option value="" disabled selected data-key="opt_select_company">-- Pilih Perusahaan Terdaftar --</option>
-                                <!-- Multi-list PT dari database akan muncul di sini -->
-                                <option value="MANUAL" data-key="opt_manual_company">+ Input Manual Nama Perusahaan</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group" id="manual-company-group" style="display: none;">
-                            <label data-key="label_manual_company">Masukkan Nama Instansi / Perusahaan (Manual)</label>
-                            <input type="text" id="guest-company-manual" placeholder="Contoh: PT Bangun Jaya Sentosa">
-                        </div>
-
-                        <div class="form-group">
-                            <label data-key="label_purpose">Keperluan Kunjungan</label>
-                            <textarea id="guest-purpose" required placeholder="Contoh: Meeting koordinasi dengan Tim IT"></textarea>
-                        </div>
-
-                        <button type="submit" class="btn-primary">
-                            <i class="fa-solid fa-paper-plane"></i> <span data-key="btn_submit_reg">Kirim Registrasi</span>
-                        </button>
-                    </form>
-
-                    <div id="guest-message" class="message"></div>
-                </div>
-
-                <!-- CEK STATUS APPROVAL TAMU -->
-                <div id="check-status-section" class="card">
-                    <h2><i class="fa-solid fa-list-check"></i> <span data-key="title_check_status">Cek Status Persetujuan</span></h2>
-                    <p data-key="desc_check_status">Masukkan Nomor Registrasi / ID Tamu Anda untuk melihat status izin akses.</p>
-
-                    <form id="check-status-form">
-                        <div class="form-group">
-                            <label data-key="label_reg_no">Nomor Registrasi / ID Tamu</label>
-                            <input type="text" id="check-reg-id" required placeholder="Contoh: REG-XXXXXX">
-                        </div>
-                        <button type="submit" class="btn-secondary">
-                            <i class="fa-solid fa-search"></i> <span data-key="btn_search_status">Periksa Status</span>
-                        </button>
-                    </form>
-
-                    <div id="status-result-card" class="result-box" style="display: none;">
-                        <div id="status-notification-banner" class="notification-banner"></div>
-                        <div class="result-details">
-                            <p><strong>No Registrasi:</strong> <span id="res-reg-no">-</span></p>
-                            <p><strong>Nama:</strong> <span id="res-name">-</span></p>
-                            <p><strong>Instansi:</strong> <span id="res-company">-</span></p>
-                            <p><strong>Status Akses:</strong> <span id="res-status-badge" class="status-badge">-</span></p>
-                            <p><strong>Waktu Daftar:</strong> <span id="res-date">-</span></p>
+                        <div>
+                            <label data-lang="lblIdNumber">Nomor ID Identity</label>
+                            <input type="text" id="reg-id-num" required placeholder="No. KTP / SIM / Paspor">
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- HALAMAN LOGIN ADMIN -->
-        <section id="login-page" class="page-section">
-            <div class="card card-center">
-                <h2><i class="fa-solid fa-user-shield"></i> <span data-key="title_admin_login">Login Administrator</span></h2>
-                <p data-key="desc_admin_login">Gunakan akun admin untuk mengelola akses kunjungan tamu.</p>
-
-                <form id="login-form">
                     <div class="form-group">
-                        <label data-key="label_username">Username</label>
-                        <input type="text" id="admin-username" required placeholder="Username Admin (Bawaan: admin)">
+                        <label data-lang="lblCompany">Asal Instansi / Perusahaan</label>
+                        <select id="reg-company-select" required onchange="toggleManualCompany(this.value)">
+                            <option value="">-- Pilih PT / Instansi --</option>
+                            <!-- List PT dari DB akan dimuat di sini -->
+                            <option value="MANUAL_INPUT">+ Input Manual Nama PT / Instansi</option>
+                        </select>
                     </div>
+
+                    <div class="form-group" id="manual-company-group" style="display: none;">
+                        <label data-lang="lblManualCompany">Nama Instansi / Perusahaan (Manual)</label>
+                        <input type="text" id="reg-company-manual" placeholder="Tuliskan nama instansi Anda">
+                    </div>
+
                     <div class="form-group">
-                        <label data-key="label_password">Password</label>
-                        <input type="password" id="admin-password" required placeholder="Password (Bawaan: admin123)">
+                        <label data-lang="lblPurpose">Keperluan Kunjungan</label>
+                        <textarea id="reg-purpose" required placeholder="Jelaskan tujuan/keperluan kedatangan Anda"></textarea>
                     </div>
-                    <button type="submit" class="btn-primary">
-                        <i class="fa-solid fa-key"></i> <span data-key="btn_login">Login</span>
-                    </button>
+
+                    <button type="submit" class="btn-primary" data-lang="btnSubmitReg">Kirim Registrasi</button>
                 </form>
-                <div id="login-message" class="message error"></div>
-            </div>
-        </section>
 
-        <!-- HALAMAN DASHBOARD ADMIN -->
-        <section id="admin-dashboard" class="page-section">
-            <div class="admin-header">
-                <h2><i class="fa-solid fa-gears"></i> <span data-key="title_admin_dashboard">Dashboard Admin & Panel Kontrol</span></h2>
-                <div class="admin-nav-tabs">
-                    <button class="tab-btn active" onclick="switchAdminTab('tab-guests')"><i class="fa-solid fa-users"></i> Daftar Tamu</button>
-                    <button class="tab-btn" onclick="switchAdminTab('tab-companies')"><i class="fa-solid fa-building"></i> Kelola Perusahaan (PT)</button>
-                    <button class="tab-btn" onclick="switchAdminTab('tab-users')"><i class="fa-solid fa-user-gear"></i> Kelola User Admin</button>
-                    <button class="tab-btn btn-danger-tab" onclick="switchAdminTab('tab-config')"><i class="fa-solid fa-trash-can"></i> Hapus Konfigurasi</button>
-                </div>
+                <!-- NOTIFIKASI REGISTRASI SUKSES -->
+                <div id="reg-alert" class="alert hidden"></div>
             </div>
 
-            <!-- TAB 1: DAFTAR TAMU -->
-            <div id="tab-guests" class="tab-content active">
-                <div class="card">
-                    <h3>Daftar Permintaan Akses Tamu</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>No Reg</th>
-                                    <th>Waktu</th>
-                                    <th>Nama</th>
-                                    <th>ID (Tipe & No)</th>
-                                    <th>Instansi/PT</th>
-                                    <th>Keperluan</th>
-                                    <th>Status</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="guests-tbody">
-                                <!-- Data diisi via JS -->
-                            </tbody>
-                        </table>
+            <!-- PERIKSA STATUS APPROVAL TAMU -->
+            <div class="card" id="check-status-sec">
+                <h3 class="card-title"><i class="fa-solid fa-magnifying-glass"></i> <span data-lang="checkStatusTitle">Cek Status Approval Tamu</span></h3>
+                <p class="text-sm" data-lang="checkStatusDesc">Masukkan Nomor Registrasi / ID Tamu yang Anda dapatkan saat pendaftaran.</p>
+                
+                <form id="check-status-form" class="search-box">
+                    <input type="text" id="search-reg-id" required placeholder="Contoh: REG-849201">
+                    <button type="submit" class="btn-secondary" data-lang="btnCheck">Periksa</button>
+                </form>
+
+                <!-- HASIL PENCARIAN STATUS TAMU -->
+                <div id="status-result-card" class="status-result hidden">
+                    <div class="status-header">
+                        <span id="res-reg-num" class="reg-badge">REG-000000</span>
+                        <div id="res-status-badge" class="badge badge-warning">Menunggu Akses</div>
                     </div>
-                </div>
-            </div>
-
-            <!-- TAB 2: KELOLA PERUSAHAAN (PT) -->
-            <div id="tab-companies" class="tab-content">
-                <div class="card">
-                    <h3>Tambah Nama PT Disetujui</h3>
-                    <form id="add-company-form" class="inline-form">
-                        <input type="text" id="new-company-name" required placeholder="Contoh: PT Maju Bersama">
-                        <button type="submit" class="btn-primary"><i class="fa-solid fa-plus"></i> Tambah PT</button>
-                    </form>
-                    <div id="company-message" class="message"></div>
-
-                    <h4 style="margin-top: 1.5rem;">Daftar PT Disetujui</h4>
-                    <ul id="company-list" class="company-list">
-                        <!-- List diisi JS -->
-                    </ul>
-                </div>
-            </div>
-
-            <!-- TAB 3: KELOLA USER ADMIN & RESET PASSWORD -->
-            <div id="tab-users" class="tab-content">
-                <div class="card">
-                    <h3>Tambah Akun Admin Baru (Tanpa Registrasi Email)</h3>
-                    <form id="add-user-form">
-                        <div class="form-group">
-                            <label>Username Baru</label>
-                            <input type="text" id="new-user-name" required placeholder="Username baru">
-                        </div>
-                        <div class="form-group">
-                            <label>Password Baru</label>
-                            <input type="password" id="new-user-pass" required placeholder="Password baru">
-                        </div>
-                        <button type="submit" class="btn-primary"><i class="fa-solid fa-user-plus"></i> Buat Akun Admin</button>
-                    </form>
-                    <div id="user-message" class="message"></div>
-
-                    <h4 style="margin-top: 2rem;">Daftar Akun Admin & Reset Password</h4>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Username</th>
-                                    <th>Role</th>
-                                    <th>Tanggal Dibuat</th>
-                                    <th>Aksi Reset Password</th>
-                                </tr>
-                            </thead>
-                            <tbody id="users-tbody">
-                                <!-- Data user diisi JS -->
-                            </tbody>
-                        </table>
+                    <div class="status-body">
+                        <p><strong>Nama:</strong> <span id="res-nama">-</span></p>
+                        <p><strong>Instansi:</strong> <span id="res-instansi">-</span></p>
+                        <p><strong>Jenis ID:</strong> <span id="res-jenis-id">-</span> (<span id="res-no-id">-</span>)</p>
+                        <p><strong>Waktu Daftar:</strong> <span id="res-date">-</span></p>
                     </div>
+                    <div id="res-notification" class="status-notif-box"></div>
                 </div>
             </div>
-
-            <!-- TAB 4: HAPUS KONFIGURASI WEB -->
-            <div id="tab-config" class="tab-content">
-                <div class="card border-danger">
-                    <h3 class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> Menghapus Semua Konfigurasi & Data Web</h3>
-                    <p>Tindakan ini akan <strong>menghapus semua data registrasi tamu</strong>, mereset daftar Perusahaan (PT), serta mengembalikan data user admin ke bawaan dasar Supabase.</p>
-                    <button onclick="resetAllConfigurations()" class="btn-danger">
-                        <i class="fa-solid fa-trash-arrow-up"></i> Hapus Semua Konfigurasi & Reset Sistem
-                    </button>
-                </div>
-            </div>
-        </section>
-
+        </div>
     </div>
 
-    <!-- JavaScript App -->
+    <!-- HALAMAN LOGIN ADMIN -->
+    <div id="admin-login-sec" class="tab-content container">
+        <div class="card card-center">
+            <h2 class="text-center" data-lang="adminLoginTitle">Login Administrator</h2>
+            <p class="text-center text-sm" data-lang="adminLoginDesc">Gunakan Username dan Password untuk masuk ke dashboard.</p>
+            
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label data-lang="lblUsername">Username</label>
+                    <input type="text" id="admin-user" required placeholder="Username Admin">
+                </div>
+                <div class="form-group">
+                    <label data-lang="lblPassword">Password</label>
+                    <input type="password" id="admin-pass" required placeholder="Password Admin">
+                </div>
+                <button type="submit" class="btn-primary" data-lang="btnLogin">Login</button>
+            </form>
+            <div class="text-center" style="margin-top: 15px;">
+                <a href="#" onclick="openResetPasswordModal()" style="font-size: 0.9rem; color: var(--primary-color);" data-lang="btnForgotPass">Lupa / Reset Password?</a>
+            </div>
+            <div id="login-alert" class="alert alert-error hidden"></div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD UTAMA ADMIN -->
+    <div id="admin-dashboard-sec" class="tab-content container">
+        <div class="dashboard-header">
+            <h2 data-lang="dashTitle">Dashboard Panel Admin</h2>
+            <p data-lang="dashDesc">Kelola persetujuan akses tamu, instansi, akun admin, dan tampilan website.</p>
+        </div>
+
+        <div class="admin-tabs">
+            <button onclick="switchAdminTab('tab-guests')" class="admin-tab-btn active" data-lang="tabGuestList">Daftar Tamu & Approval</button>
+            <button onclick="switchAdminTab('tab-companies')" class="admin-tab-btn" data-lang="tabCompanies">Kelola Instansi / PT</button>
+            <button onclick="switchAdminTab('tab-users')" class="admin-tab-btn" data-lang="tabAdmins">Kelola Akun Admin</button>
+            <button onclick="switchAdminTab('tab-settings')" class="admin-tab-btn" data-lang="tabSettings">Pengaturan Website</button>
+        </div>
+
+        <!-- TAB 1: KELOLA TAMU -->
+        <div id="tab-guests" class="admin-tab-content active">
+            <div class="card">
+                <h3><i class="fa-solid fa-users"></i> <span data-lang="tableGuestTitle">Daftar Registrasi Tamu</span></h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No. Registrasi</th>
+                                <th>Nama</th>
+                                <th>Identitas</th>
+                                <th>Instansi</th>
+                                <th>Keperluan</th>
+                                <th>Status Akses</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="guest-table-body">
+                            <!-- Data dimuat via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: KELOLA PT / INSTANSI -->
+        <div id="tab-companies" class="admin-tab-content">
+            <div class="card">
+                <h3 data-lang="addCompanyTitle">Tambah PT / Instansi yang Disetujui</h3>
+                <form id="add-company-form" class="search-box">
+                    <input type="text" id="new-company-name" required placeholder="Contoh: PT Industri Jaya">
+                    <button type="submit" class="btn-primary" data-lang="btnAddCompany">Tambah PT</button>
+                </form>
+                <div class="table-responsive" style="margin-top: 20px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Perusahaan / PT</th>
+                                <th>Tanggal Ditambahkan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="company-table-body">
+                            <!-- Data PT dimuat via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: KELOLA AKUN ADMIN -->
+        <div id="tab-users" class="admin-tab-content">
+            <div class="card">
+                <h3 data-lang="addAdminTitle">Tambah Akun Admin Baru (Tanpa Email)</h3>
+                <form id="add-admin-form" class="grid-2">
+                    <div class="form-group">
+                        <label data-lang="lblUsername">Username Baru</label>
+                        <input type="text" id="new-admin-user" required placeholder="Username">
+                    </div>
+                    <div class="form-group">
+                        <label data-lang="lblPassword">Password Baru</label>
+                        <input type="password" id="new-admin-pass" required placeholder="Password">
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <button type="submit" class="btn-primary" data-lang="btnCreateAdmin">Buat Akun Admin</button>
+                    </div>
+                </form>
+                <div class="table-responsive" style="margin-top: 20px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Dibuat Pada</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body">
+                            <!-- Data Admin dimuat via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: PENGATURAN LOGO & WALLPAPER -->
+        <div id="tab-settings" class="admin-tab-content">
+            <div class="card">
+                <h3 data-lang="settingsTitle">Pengaturan Tampilan Logo & Wallpaper Website</h3>
+                <form id="settings-form">
+                    <div class="form-group">
+                        <label data-lang="lblLogoUrl">URL Logo Perusahaan</label>
+                        <input type="url" id="setting-logo-url" required placeholder="https://example.com/logo.png">
+                    </div>
+                    <div class="form-group">
+                        <label data-lang="lblWallpaperUrl">URL Wallpaper / Latar Belakang Website</label>
+                        <input type="url" id="setting-wallpaper-url" required placeholder="https://images.unsplash.com/...">
+                    </div>
+                    <button type="submit" class="btn-primary" data-lang="btnSaveSettings">Simpan Pengaturan Tampilan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RESET PASSWORD -->
+    <div id="reset-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeResetPasswordModal()">&times;</span>
+            <h3 data-lang="modalResetTitle">Reset Password Admin</h3>
+            <form id="reset-pass-form">
+                <div class="form-group">
+                    <label data-lang="lblUsername">Username Admin</label>
+                    <input type="text" id="reset-user" required placeholder="Masukkan Username Admin">
+                </div>
+                <div class="form-group">
+                    <label data-lang="lblNewPass">Password Baru</label>
+                    <input type="password" id="reset-new-pass" required placeholder="Masukkan Password Baru">
+                </div>
+                <button type="submit" class="btn-primary" data-lang="btnReset">Reset Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT UTAMA -->
     <script src="app.js"></script>
 </body>
 </html>

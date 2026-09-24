@@ -1,7 +1,7 @@
 // ==========================================
 // KONFIGURASI SUPABASE (GANTI DENGAN MILIKMU)
 // ==========================================
-const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co; // Ganti dengan URL Anda
+const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co'; // Ganti dengan URL Anda
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU'; // Ganti dengan anon key Anda
 
 // Inisialisasi klien Supabase

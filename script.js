@@ -1,4 +1,4 @@
-// Konfigurasi Supabase (Ganti dengan kredensial Supabase Anda jika menggunakan backend cloud)
+// Konfigurasi Supabase (Ganti dengan kredensial Supabase Anda)
 const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU';
 
@@ -127,7 +127,7 @@ window.onload = async () => {
     setupLoginEnterKey();
 };
 
-// Enter key support for login
+// Enter key support for login[cite: 5]
 function setupLoginEnterKey() {
     const passInput = document.getElementById('login-password');
     if (passInput) {
@@ -203,23 +203,35 @@ async function loadDropdownData() {
     }
 }
 
-// --- Guest Registration ---
+// --- Guest Registration with Autosave Manual Company ---
 async function handleRegister(e) {
     e.preventDefault();
     const guestId = 'GST-' + Math.floor(100000 + Math.random() * 900000);
+    const companyInput = document.getElementById('reg-company').value.trim();
 
     const newGuest = {
         guest_id: guestId,
         fullname: document.getElementById('reg-name').value,
         id_type: document.getElementById('reg-id-type').value,
         id_number: document.getElementById('reg-id-number').value,
-        origin_company: document.getElementById('reg-company').value,
+        origin_company: companyInput,
         purpose: document.getElementById('reg-purpose').value,
         status: 'Pending',
         created_at: new Date().toISOString()
     };
 
     if (supabaseClient) {
+        // Autosave manual company if not exists in approved_companies whitelist
+        const { data: existingComp } = await supabaseClient
+            .from('approved_companies')
+            .select('company_name')
+            .ilike('company_name', companyInput)
+            .single();
+
+        if (!existingComp) {
+            await supabaseClient.from('approved_companies').insert([{ company_name: companyInput }]);
+        }
+
         const { error } = await supabaseClient.from('guests').insert([newGuest]);
         if (error) {
             alert('Gagal registrasi: ' + error.message);
@@ -229,6 +241,12 @@ async function handleRegister(e) {
         let guests = JSON.parse(localStorage.getItem('guests') || '[]');
         guests.push(newGuest);
         localStorage.setItem('guests', JSON.stringify(guests));
+
+        let comps = JSON.parse(localStorage.getItem('approved_companies') || '[]');
+        if (!comps.includes(companyInput)) {
+            comps.push(companyInput);
+            localStorage.setItem('approved_companies', JSON.stringify(comps));
+        }
     }
 
     alert(`Registrasi Berhasil!\nNomor ID / Kode Booking Anda: ${guestId}\nSimpan kode ini untuk mengecek status.`);
@@ -236,7 +254,7 @@ async function handleRegister(e) {
     showView('view-status');
 }
 
-// --- Check Status & Booking List ---
+// --- Check Status & Booking List (Realtime DB Query) ---
 async function checkStatus() {
     const id = document.getElementById('check-guest-id').value.trim();
     const resultDiv = document.getElementById('status-result');
@@ -264,7 +282,7 @@ async function checkStatus() {
         let msg = `Tamu: <strong>${guest.fullname}</strong> (${guest.origin_company})<br>Status: <strong>${guest.status}</strong>`;
         if (guest.status === 'Approved') {
             resultDiv.className = 'notif success';
-            msg += '<br><span style="color:#155724; font-size:1.1rem;">🔔 AKSES DISETUJUI (APPROVED)! Silakan masuk.</span>';
+            msg += '<br><span style="color:#155724; font-size:1.1rem;">🔔 NOTIFIKASI: AKSES DISETUJUI (APPROVED)! Silakan masuk.</span>';
         } else if (guest.status === 'Rejected') {
             resultDiv.className = 'notif rejected';
             msg += '<br>Maaf, kunjungan Anda tidak disetujui.';

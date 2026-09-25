@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrasi Tamu</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="overlay"></div>
+    <header>
+        <img id="app-logo" src="" alt="Logo" style="display:none;">
+        <h1 id="app-company-name">PT Solusi Bisnis Digital</h1>
+    </header>
+
+    <main class="container">
+        <h2>Registrasi Tamu</h2>
+        <form id="form-register" onsubmit="handleRegister(event)">
+            <label>Nama Lengkap:</label>
+            <input type="text" id="reg-name" placeholder="Masukkan nama lengkap" required>
+
+            <label>Jenis ID:</label>
+            <select id="reg-id-type" required>
+                <option value="" disabled selected>Pilih Jenis ID</option>
+            </select>
+
+            <label>Nomor ID (No ID / KTP / SIM):</label>
+            <input type="text" id="reg-id-number" placeholder="Masukkan nomor identitas" required>
+
+            <label>Asal Instansi / Perusahaan:</label>
+            <input type="text" id="reg-company" list="approved-companies" placeholder="Pilih atau ketik manual perusahaan" required>
+            <datalist id="approved-companies"></datalist>
+
+            <label>Tujuan Kunjungan:</label>
+            <textarea id="reg-purpose" placeholder="Keperluan / nama PIC yang dituju" rows="3" required></textarea>
+
+            <button type="submit" class="btn-primary">Daftar & Dapatkan Kode Booking</button>
+        </form>
+
+        <button class="btn-back" onclick="location.href='index.html'">Kembali</button>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Load dropdown approved companies and ID types
+            if (supabase) {
+                const { data: compData } = await supabase.from('approved_companies').select('company_name');
+                if (compData) {
+                    const dl = document.getElementById('approved-companies');
+                    compData.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.company_name;
+                        dl.appendChild(opt);
+                    });
+                }
+                const { data: idData } = await supabase.from('id_types').select('type_name');
+                if (idData) {
+                    const sel = document.getElementById('reg-id-type');
+                    idData.forEach(i => {
+                        const opt = document.createElement('option');
+                        opt.value = i.type_name;
+                        opt.textContent = i.type_name;
+                        sel.appendChild(opt);
+                    });
+                }
+            }
+        });
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const bookingCode = 'BK-' + Math.floor(100000 + Math.random() * 900000);
+            
+            const guestObj = {
+                guest_id: bookingCode,
+                fullname: document.getElementById('reg-name').value,
+                id_type: document.getElementById('reg-id-type').value,
+                id_number: document.getElementById('reg-id-number').value,
+                origin_company: document.getElementById('reg-company').value,
+                purpose: document.getElementById('reg-purpose').value,
+                status: 'Pending'
+            };
+
+            if (supabase) {
+                const { error } = await supabase.from('guests').insert([guestObj]);
+                if (error) {
+                    alert("Gagal registrasi ke database: " + error.message);
+                    return;
+                }
+            } else {
+                let guests = JSON.parse(localStorage.getItem('local_guests') || '[]');
+                guests.push(guestObj);
+                localStorage.setItem('local_guests', JSON.stringify(guests));
+            }
+
+            alert(`Registrasi Berhasil!\nKode Booking / ID Tamu Anda: ${bookingCode}\nSimpan nomor ini untuk pengecekan status.`);
+            location.href = 'status.html';
+        }
+    </script>
+</body>
+</html>

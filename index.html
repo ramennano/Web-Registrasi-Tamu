@@ -5,182 +5,193 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">Sistem Manajemen Tamu</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Supabase SDK CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body id="app-body">
     <div class="overlay"></div>
     
     <header class="main-header">
-        <div class="logo-container">
-            <img id="app-logo" src="" alt="Logo" style="display:none;">
-        </div>
+        <img id="app-logo" src="" alt="Logo" style="display:none; max-height: 60px;">
         <h1 id="app-company-name">PT Solusi Teknologi Indonesia</h1>
     </header>
 
     <main class="container">
-        <!-- TAMPILAN 1: PILIHAN BAHASA & MENU UTAMA -->
+        <!-- VIEW 1: HOME / LANDING -->
         <section id="view-home" class="view active">
             <div class="lang-selector">
-                <label id="lbl-lang">Bahasa:</label>
                 <select id="lang-select" onchange="changeLanguage()">
                     <option value="id">Indonesia</option>
                     <option value="en">English</option>
                 </select>
             </div>
-            
             <div class="welcome-box">
                 <h2 id="txt-welcome">Selamat Datang di Portal Tamu</h2>
-                <p id="txt-desc">Silakan mulai pendaftaran kunjungan Anda atau periksa status kunjungan.</p>
+                <p id="txt-subtitle">Silakan pilih menu di bawah ini untuk melanjutkan.</p>
                 
-                <button class="btn-primary" onclick="showView('view-register')" id="btn-get-started">Get Started (Registrasi Tamu)</button>
-                <button class="btn-secondary" onclick="showView('view-status')" id="btn-go-status" style="margin-top: 10px;">Cek Status Kunjungan / Booking</button>
-                <button class="btn-dark" onclick="showView('view-login')" id="btn-go-login" style="margin-top: 10px;">Login Admin & Super Admin</button>
+                <button class="btn-primary btn-large" onclick="showView('view-register')" id="btn-get-started">Get Started</button>
+                
+                <div class="home-links">
+                    <button class="btn-secondary" onclick="showView('view-status')" id="btn-goto-status">Cek Status Kunjungan</button>
+                    <button class="btn-outline" onclick="showView('view-login')" id="btn-goto-login">Login Admin / Super Admin</button>
+                </div>
             </div>
         </section>
 
-        <!-- TAMPILAN REGISTRASI TAMU -->
+        <!-- VIEW 2: REGISTRASI TAMU -->
         <section id="view-register" class="view">
             <h2 id="txt-reg-title">Registrasi Tamu</h2>
             <form id="form-register" onsubmit="handleRegister(event)">
-                <label id="lbl-fullname">Nama Lengkap:</label>
-                <input type="text" id="reg-name" placeholder="Masukkan nama lengkap" required>
+                <div class="form-group">
+                    <label id="lbl-fullname">Nama Lengkap</label>
+                    <input type="text" id="reg-name" required placeholder="Masukkan nama lengkap">
+                </div>
                 
-                <label id="lbl-idtype">Jenis ID:</label>
-                <select id="reg-id-type" required>
-                    <option value="" disabled selected>Pilih Jenis ID</option>
-                </select>
+                <div class="form-group">
+                    <label id="lbl-id-type">Jenis ID</label>
+                    <select id="reg-id-type" required>
+                        <option value="" disabled selected>Pilih Jenis ID</option>
+                    </select>
+                </div>
 
-                <label id="lbl-idnum">Nomor Identitas (No ID):</label>
-                <input type="text" id="reg-id-number" placeholder="Nomor KTP/SIM/Paspor" required>
+                <div class="form-group">
+                    <label id="lbl-id-number">Nomor ID</label>
+                    <input type="text" id="reg-id-number" required placeholder="Nomor KTP/SIM/Paspor">
+                </div>
 
-                <label id="lbl-company">Asal Instansi / Perusahaan:</label>
-                <input type="text" id="reg-company" list="approved-companies-list" placeholder="Ketik manual atau pilih instansi" required>
-                <datalist id="approved-companies-list"></datalist>
+                <div class="form-group">
+                    <label id="lbl-company">Asal Instansi / Perusahaan</label>
+                    <input type="text" id="reg-company" list="approved-companies-list" required placeholder="Pilih atau ketik manual asal PT">
+                    <datalist id="approved-companies-list"></datalist>
+                </div>
 
-                <label id="lbl-purpose">Tujuan Kunjungan:</label>
-                <textarea id="reg-purpose" placeholder="Keperluan / Bertemu siapa..." required></textarea>
+                <div class="form-group">
+                    <label id="lbl-purpose">Tujuan Kunjungan</label>
+                    <textarea id="reg-purpose" required placeholder="Keperluan kunjungan..."></textarea>
+                </div>
 
-                <button type="submit" class="btn-primary" id="btn-submit-reg">Kirim Pendaftaran</button>
+                <button type="submit" class="btn-primary" id="btn-submit-reg">Daftar Sekarang</button>
             </form>
             <button class="btn-back" onclick="showView('view-home')" id="btn-back-1">Kembali</button>
         </section>
 
-        <!-- TAMPILAN KEDUA: CEK STATUS & KODE BOOKING TERDAFTAR -->
+        <!-- VIEW 3: CEK STATUS KUNJUNGAN & DAFTAR BOOKING -->
         <section id="view-status" class="view">
             <h2 id="txt-status-title">Cek Status Kunjungan</h2>
+            <p id="txt-status-desc">Masukkan Nomor Registrasi / ID Tamu Anda untuk memeriksa status.</p>
             
-            <div class="card">
-                <p id="txt-check-desc">Masukkan ID Tamu / Nomor Registrasi / Kode Booking Anda:</p>
-                <div class="input-group">
-                    <input type="text" id="check-guest-id" placeholder="Contoh: GST-123456">
-                    <button onclick="checkStatusRealtime()" class="btn-primary" id="btn-check-status">Cek Status</button>
-                </div>
-                <!-- Tempat Notifikasi Status Approval -->
-                <div id="status-result-notif" class="notif-box" style="display:none;"></div>
+            <div class="search-box">
+                <input type="text" id="check-guest-id" placeholder="Contoh: GST-123456">
+                <button onclick="checkStatus()" class="btn-primary" id="btn-check-status">Cek Status</button>
             </div>
+            
+            <div id="status-result" class="notif" style="display:none;"></div>
 
-            <div class="card" style="margin-top: 20px;">
-                <h3 id="txt-booking-list">Daftar Kode Booking Tamu Terdaftar</h3>
-                <div id="public-booking-list" class="scrollable-list">
-                    <!-- Loaded dynamically -->
-                </div>
+            <div class="booking-list-container">
+                <h3 id="txt-booking-list">Daftar Kode Booking / Tamu Terdaftar</h3>
+                <button onclick="loadRegisteredBookings()" class="btn-outline" style="margin-bottom:10px;" id="btn-refresh-booking">Muat Daftar Booking</button>
+                <div id="registered-bookings-list" class="scroll-list"></div>
             </div>
 
             <button class="btn-back" onclick="showView('view-home')" id="btn-back-2">Kembali</button>
         </section>
 
-        <!-- TAMPILAN KETIGA: HALAMAN LOGIN ADMIN & SUPER ADMIN -->
+        <!-- VIEW 4: LOGIN ADMIN & SUPER ADMIN -->
         <section id="view-login" class="view">
             <h2 id="txt-login-title">Login Admin & Super Admin</h2>
-            <div class="card">
-                <form id="form-login" onsubmit="handleLogin(event)">
-                    <label>Username:</label>
-                    <input type="text" id="login-username" placeholder="Username" required>
-                    
-                    <label>Password:</label>
-                    <input type="password" id="login-password" placeholder="Password" required>
-                    
-                    <button type="submit" class="btn-primary" id="btn-login-submit">Login</button>
-                </form>
-                <a href="#" onclick="showView('view-reset')" style="display:block; margin-top:15px; text-align:center;" id="link-reset">Lupa / Reset Password?</a>
+            <form id="form-login" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label id="lbl-username">Username</label>
+                    <input type="text" id="login-username" required placeholder="Masukkan username">
+                </div>
+                <div class="form-group">
+                    <label id="lbl-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="Masukkan password">
+                </div>
+                <button type="submit" class="btn-primary" id="btn-login-submit">Login</button>
+            </form>
+            <div class="extra-links">
+                <a href="#" onclick="showView('view-reset')" id="link-reset-pass">Lupa / Reset Password?</a>
             </div>
             <button class="btn-back" onclick="showView('view-home')" id="btn-back-3">Kembali</button>
         </section>
 
-        <!-- TAMPILAN RESET PASSWORD -->
+        <!-- VIEW 5: RESET PASSWORD -->
         <section id="view-reset" class="view">
-            <h2 id="txt-reset-title">Reset Password Akun</h2>
-            <div class="card">
-                <p>Masukkan username dan buat password baru:</p>
-                <input type="text" id="reset-username" placeholder="Username Admin/SuperAdmin" required>
-                <input type="password" id="reset-new-password" placeholder="Password Baru" required>
-                <button onclick="handleResetPassword()" class="btn-primary">Update Password</button>
+            <h2 id="txt-reset-title">Reset Password</h2>
+            <p id="txt-reset-desc">Masukkan username dan password baru Anda.</p>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="reset-username" placeholder="Username admin/superadmin">
             </div>
+            <div class="form-group">
+                <label>Password Baru</label>
+                <input type="password" id="reset-new-password" placeholder="Password baru">
+            </div>
+            <button onclick="handleResetPassword()" class="btn-primary" id="btn-reset-submit">Reset Password</button>
             <button class="btn-back" onclick="showView('view-login')" id="btn-back-4">Kembali</button>
         </section>
 
-        <!-- DASHBOARD ADMIN -->
+        <!-- VIEW 6: ADMIN DASHBOARD -->
         <section id="view-admin" class="view">
-            <h2>Dashboard Admin</h2>
-            <div class="card">
-                <h3>Permintaan Masuk & Status Tamu</h3>
-                <button onclick="loadAdminData()" class="btn-secondary" style="margin-bottom:15px;">Refresh Data</button>
-                <div id="admin-pending-list"></div>
+            <h2>Admin Dashboard</h2>
+            <div class="dashboard-card">
+                <h3>Permintaan Kunjungan Masuk</h3>
+                <button onclick="loadAdminGuests()" class="btn-secondary">Refresh Data</button>
+                <div id="admin-guest-container" class="scroll-list"></div>
             </div>
-
-            <div class="card" style="margin-top: 20px;">
-                <h3>History Tamu (Sudah Approved / Selesai)</h3>
-                <div id="admin-history-list"></div>
-            </div>
-            <button class="btn-danger" onclick="logout()" style="margin-top: 20px;">Logout</button>
+            <button class="btn-back" onclick="logout()" id="btn-admin-logout">Logout</button>
         </section>
 
-        <!-- DASHBOARD SUPER ADMIN -->
+        <!-- VIEW 7: SUPER ADMIN DASHBOARD -->
         <section id="view-superadmin" class="view">
-            <h2>Dashboard Super Admin</h2>
+            <h2>Super Admin Dashboard</h2>
             
-            <!-- Konfigurasi Website -->
-            <div class="card">
-                <h3>Pengaturan Tampilan & Perusahaan</h3>
-                <label>Nama Perusahaan / PT:</label>
-                <input type="text" id="sa-company-name" placeholder="Nama PT...">
-                
-                <label>Upload Logo Perusahaan (Local Device):</label>
-                <input type="file" id="sa-logo-file" accept="image/*">
-                
-                <label>Upload Background Wallpaper Website (Local Device):</label>
-                <input type="file" id="sa-wallpaper-file" accept="image/*">
-
-                <button onclick="saveWebConfiguration()" class="btn-primary" style="margin-top:10px;">Simpan Perubahan Web</button>
-                <button onclick="resetAllConfiguration()" class="btn-danger" style="margin-top:10px;">Hapus Semua Konfigurasi Web (Reset)</button>
-            </div>
-
-            <!-- Manajemen Whitelist PT & Jenis ID -->
-            <div class="card" style="margin-top: 20px;">
-                <h3>Manajemen Whitelist PT & Jenis ID</h3>
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input type="text" id="new-pt-input" placeholder="Tambah Nama PT baru...">
-                    <button onclick="addApprovedCompany()" class="btn-secondary" style="width: auto;">Tambah PT</button>
+            <div class="dashboard-card">
+                <h3>Konfigurasi Website & Tampilan</h3>
+                <div class="form-group">
+                    <label>Nama Perusahaan / PT</label>
+                    <input type="text" id="config-pt-name" placeholder="Nama PT baru">
                 </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <input type="text" id="new-idtype-input" placeholder="Tambah Jenis ID baru (mis: Kitas)...">
-                    <button onclick="addIdType()" class="btn-secondary" style="width: auto;">Tambah Jenis ID</button>
+                <div class="form-group">
+                    <label>Upload Logo Perusahaan (Lokal)</label>
+                    <input type="file" id="config-logo" accept="image/*">
                 </div>
-                <div id="sa-whitelist-display" style="font-size: 14px; color: #555;"></div>
+                <div class="form-group">
+                    <label>Upload Wallpaper Background (Lokal)</label>
+                    <input type="file" id="config-wallpaper" accept="image/*">
+                </div>
+                <button onclick="saveWebConfiguration()" class="btn-primary">Simpan Konfigurasi</button>
+                <button onclick="resetAllConfigurations()" class="btn-danger" style="margin-top:10px;">Hapus Semua Konfigurasi Web</button>
             </div>
 
-            <!-- Manajemen Data Tamu -->
-            <div class="card" style="margin-top: 20px;">
-                <h3>Manajemen / Hapus Data Tamu</h3>
-                <button onclick="loadSuperAdminGuests()" class="btn-secondary" style="margin-bottom: 15px;">Muat Daftar Tamu</button>
-                <div id="sa-guest-management-list"></div>
+            <div class="dashboard-card" style="margin-top:20px;">
+                <h3>Manajemen PT Disetujui (Whitelist Asal Perusahaan)</h3>
+                <div class="form-group">
+                    <input type="text" id="new-approved-company" placeholder="Nama PT baru">
+                    <button onclick="addApprovedCompany()" class="btn-secondary" style="margin-top:5px;">Tambah PT</button>
+                </div>
+                <div id="approved-companies-manage-list" class="scroll-list"></div>
             </div>
 
-            <button class="btn-danger" onclick="logout()" style="margin-top: 20px;">Logout</button>
+            <div class="dashboard-card" style="margin-top:20px;">
+                <h3>Manajemen Jenis ID & No ID</h3>
+                <div class="form-group">
+                    <input type="text" id="new-id-type" placeholder="Jenis ID baru (mis: Kims, ID Pegawai)">
+                    <button onclick="addIdType()" class="btn-secondary" style="margin-top:5px;">Tambah Jenis ID</button>
+                </div>
+                <div id="id-types-manage-list" class="scroll-list"></div>
+            </div>
+
+            <div class="dashboard-card" style="margin-top:20px;">
+                <h3>Manajemen Data Tamu (Hapus Tamu Selesai / Terlama)</h3>
+                <button onclick="loadSuperAdminGuests()" class="btn-secondary">Muat Data Tamu</button>
+                <div id="superadmin-guest-container" class="scroll-list"></div>
+            </div>
+
+            <button class="btn-back" onclick="logout()" style="margin-top:20px;" id="btn-sa-logout">Logout</button>
         </section>
     </main>
 
-    <script src="app.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

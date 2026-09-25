@@ -1,90 +1,184 @@
-// --- KONEKSI SUPABASE ---
+// Konfigurasi Supabase (Ganti dengan kredensial Supabase Anda jika menggunakan backend cloud)
 const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU';
 
 let supabaseClient = null;
 try {
-    if (SUPABASE_URL !== 'https://gyortxfcoifxzrwfogzr.supabase.co') {
+    if (window.supabase && SUPABASE_URL !== 'https://gyortxfcoifxzrwfogzr.supabase.co') {
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 } catch (e) {
-    console.warn('Menggunakan mode fallback localStorage.');
+    console.warn('Supabase tidak terhubung, menggunakan LocalStorage fallback.');
 }
 
-// --- NAVIGASI ---
+// --- Multi-Language Dictionary ---
+const dictionary = {
+    id: {
+        welcome: "Selamat Datang di Portal Tamu",
+        subtitle: "Silakan pilih menu di bawah ini untuk melanjutkan.",
+        getStarted: "Get Started (Registrasi Tamu)",
+        gotoStatus: "Cek Status Kunjungan",
+        gotoLogin: "Login Admin & Super Admin",
+        regTitle: "Registrasi Tamu",
+        fullname: "Nama Lengkap",
+        idType: "Jenis ID",
+        idNumber: "Nomor ID",
+        company: "Asal Instansi / Perusahaan",
+        purpose: "Tujuan Kunjungan",
+        submitReg: "Daftar Sekarang",
+        statusTitle: "Cek Status Kunjungan",
+        statusDesc: "Masukkan Nomor Registrasi / ID Tamu Anda untuk memeriksa status.",
+        checkStatusBtn: "Cek Status",
+        bookingListTitle: "Daftar Kode Booking / Tamu Terdaftar",
+        refreshBooking: "Muat Daftar Booking",
+        loginTitle: "Login Admin & Super Admin",
+        username: "Username",
+        password: "Password",
+        loginBtn: "Login",
+        resetPassLink: "Lupa / Reset Password?",
+        resetTitle: "Reset Password",
+        resetDesc: "Masukkan username dan password baru Anda.",
+        resetBtn: "Reset Password",
+        back: "Kembali"
+    },
+    en: {
+        welcome: "Welcome to Guest Portal",
+        subtitle: "Please select an option below to proceed.",
+        getStarted: "Get Started (Guest Registration)",
+        gotoStatus: "Check Visit Status",
+        gotoLogin: "Admin & Super Admin Login",
+        regTitle: "Guest Registration",
+        fullname: "Full Name",
+        idType: "ID Type",
+        idNumber: "ID Number",
+        company: "Origin Company / Institution",
+        purpose: "Purpose of Visit",
+        submitReg: "Register Now",
+        statusTitle: "Check Visit Status",
+        statusDesc: "Enter your Registration Number / Guest ID to check status.",
+        checkStatusBtn: "Check Status",
+        bookingListTitle: "Registered Booking Codes / Guests",
+        refreshBooking: "Load Booking List",
+        loginTitle: "Admin & Super Admin Login",
+        username: "Username",
+        password: "Password",
+        loginBtn: "Login",
+        resetPassLink: "Forgot / Reset Password?",
+        resetTitle: "Reset Password",
+        resetDesc: "Enter your username and new password.",
+        resetBtn: "Reset Password",
+        back: "Back"
+    }
+};
+
+let currentLang = 'id';
+
+function changeLanguage() {
+    currentLang = document.getElementById('lang-select').value;
+    const t = dictionary[currentLang];
+
+    document.getElementById('txt-welcome').innerText = t.welcome;
+    document.getElementById('txt-subtitle').innerText = t.subtitle;
+    document.getElementById('btn-get-started').innerText = t.getStarted;
+    document.getElementById('btn-goto-status').innerText = t.gotoStatus;
+    document.getElementById('btn-goto-login').innerText = t.gotoLogin;
+
+    document.getElementById('txt-reg-title').innerText = t.regTitle;
+    document.getElementById('lbl-fullname').innerText = t.fullname;
+    document.getElementById('lbl-id-type').innerText = t.idType;
+    document.getElementById('lbl-id-number').innerText = t.idNumber;
+    document.getElementById('lbl-company').innerText = t.company;
+    document.getElementById('lbl-purpose').innerText = t.purpose;
+    document.getElementById('btn-submit-reg').innerText = t.submitReg;
+
+    document.getElementById('txt-status-title').innerText = t.statusTitle;
+    document.getElementById('txt-status-desc').innerText = t.statusDesc;
+    document.getElementById('btn-check-status').innerText = t.checkStatusBtn;
+    document.getElementById('txt-booking-list').innerText = t.bookingListTitle;
+    document.getElementById('btn-refresh-booking').innerText = t.refreshBooking;
+
+    document.getElementById('txt-login-title').innerText = t.loginTitle;
+    document.getElementById('lbl-username').innerText = t.username;
+    document.getElementById('lbl-password').innerText = t.password;
+    document.getElementById('btn-login-submit').innerText = t.loginBtn;
+    document.getElementById('link-reset-pass').innerText = t.resetPassLink;
+
+    document.getElementById('txt-reset-title').innerText = t.resetTitle;
+    document.getElementById('txt-reset-desc').innerText = t.resetDesc;
+    document.getElementById('btn-reset-submit').innerText = t.resetBtn;
+
+    document.querySelectorAll('.btn-back').forEach(btn => btn.innerText = t.back);
+}
+
+// --- Navigation ---
 function showView(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
+    
+    if (viewId === 'view-status') {
+        loadRegisteredBookings();
+    }
 }
 
-// --- INISIALISASI ---
+// --- Initialization ---
 window.onload = async () => {
     await loadWebSettings();
-    await loadApprovedCompaniesDropdown();
-    await loadIdTypesDropdown();
-    setupEnterKeyListener();
+    await loadDropdownData();
+    setupLoginEnterKey();
 };
 
-// --- TOMBOL ENTER PADA LOGIN (Requirement 5) ---
-function setupEnterKeyListener() {
-    const userInp = document.getElementById('login-username');
-    const passInp = document.getElementById('login-password');
-
-    const handleEnter = (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleLogin();
-        }
-    };
-
-    if (userInp) userInp.addEventListener('keydown', handleEnter);
-    if (passInp) passInp.addEventListener('keydown', handleEnter);
+// Enter key support for login
+function setupLoginEnterKey() {
+    const passInput = document.getElementById('login-password');
+    if (passInput) {
+        passInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleLogin(e);
+            }
+        });
+    }
 }
 
-// --- PENGATURAN WEB (Logo, Wallpaper, Nama PT) ---
+// --- Web Settings & Configurations ---
 async function loadWebSettings() {
     let settings = {};
     if (supabaseClient) {
         const { data } = await supabaseClient.from('web_settings').select('*');
-        if (data) data.forEach(i => settings[i.setting_key] = i.setting_value);
+        if (data) {
+            data.forEach(s => settings[s.setting_key] = s.setting_value);
+        }
     } else {
-        settings = {
-            company_name: localStorage.getItem('company_name') || 'PT Solusi Teknologi Indonesia',
-            logo_url: localStorage.getItem('logo_url') || '',
-            wallpaper_url: localStorage.getItem('wallpaper_url') || ''
-        };
+        settings = JSON.parse(localStorage.getItem('web_settings') || '{}');
     }
 
     if (settings.company_name) {
         document.getElementById('app-company-name').innerText = settings.company_name;
         document.title = settings.company_name;
-        const ptInput = document.getElementById('config-pt-name');
-        if (ptInput) ptInput.value = settings.company_name;
     }
-
-    const logoImg = document.getElementById('app-logo');
     if (settings.logo_url) {
-        logoImg.src = settings.logo_url;
-        logoImg.style.display = 'block';
-    } else {
-        logoImg.style.display = 'none';
+        const logo = document.getElementById('app-logo');
+        logo.src = settings.logo_url;
+        logo.style.display = 'inline-block';
     }
-
     if (settings.wallpaper_url) {
         document.body.style.backgroundImage = `url('${settings.wallpaper_url}')`;
-    } else {
-        document.body.style.backgroundImage = 'none';
     }
 }
 
-// --- WHITELIST PT & JENIS ID ---
-async function loadApprovedCompaniesDropdown() {
+async function loadDropdownData() {
     let companies = [];
+    let idTypes = [];
+
     if (supabaseClient) {
-        const { data } = await supabaseClient.from('approved_companies').select('company_name');
-        if (data) companies = data.map(d => d.company_name);
+        const compRes = await supabaseClient.from('approved_companies').select('company_name');
+        if (compRes.data) companies = compRes.data.map(c => c.company_name);
+
+        const idRes = await supabaseClient.from('id_types').select('name');
+        if (idRes.data) idTypes = idRes.data.map(i => i.name);
     } else {
-        companies = JSON.parse(localStorage.getItem('approved_companies')) || ['PT Maju Bersama', 'PT Nusantara Digital'];
+        companies = JSON.parse(localStorage.getItem('approved_companies') || '["PT Maju Bersama", "PT Teknologi Nusantara"]');
+        idTypes = JSON.parse(localStorage.getItem('id_types') || '["KTP", "SIM", "Paspor"]');
     }
 
     const datalist = document.getElementById('approved-companies-list');
@@ -97,50 +191,24 @@ async function loadApprovedCompaniesDropdown() {
         });
     }
 
-    const display = document.getElementById('company-list-display');
-    if (display) {
-        display.innerHTML = '';
-        companies.forEach(c => {
-            display.innerHTML += `<span class="tag">${c}</span>`;
-        });
-    }
-}
-
-async function loadIdTypesDropdown() {
-    let idTypes = [];
-    if (supabaseClient) {
-        const { data } = await supabaseClient.from('id_types').select('type_name');
-        if (data) idTypes = data.map(d => d.type_name);
-    } else {
-        idTypes = JSON.parse(localStorage.getItem('id_types')) || ['KTP', 'SIM', 'Paspor', 'ID Karyawan'];
-    }
-
-    const select = document.getElementById('reg-id-type');
-    if (select) {
-        select.innerHTML = '<option value="" disabled selected>Pilih Jenis ID</option>';
-        idTypes.forEach(t => {
+    const idSelect = document.getElementById('reg-id-type');
+    if (idSelect) {
+        idSelect.innerHTML = '<option value="" disabled selected>Pilih Jenis ID</option>';
+        idTypes.forEach(id => {
             const opt = document.createElement('option');
-            opt.value = t;
-            opt.innerText = t;
-            select.appendChild(opt);
-        });
-    }
-
-    const display = document.getElementById('id-type-list-display');
-    if (display) {
-        display.innerHTML = '';
-        idTypes.forEach(t => {
-            display.innerHTML += `<span class="tag">${t}</span>`;
+            opt.value = id;
+            opt.innerText = id;
+            idSelect.appendChild(opt);
         });
     }
 }
 
-// --- REGISTRASI TAMU ---
+// --- Guest Registration ---
 async function handleRegister(e) {
     e.preventDefault();
     const guestId = 'GST-' + Math.floor(100000 + Math.random() * 900000);
-    
-    const guestData = {
+
+    const newGuest = {
         guest_id: guestId,
         fullname: document.getElementById('reg-name').value,
         id_type: document.getElementById('reg-id-type').value,
@@ -152,105 +220,127 @@ async function handleRegister(e) {
     };
 
     if (supabaseClient) {
-        const { error } = await supabaseClient.from('guests').insert([guestData]);
+        const { error } = await supabaseClient.from('guests').insert([newGuest]);
         if (error) {
             alert('Gagal registrasi: ' + error.message);
             return;
         }
     } else {
-        let guests = JSON.parse(localStorage.getItem('guests')) || [];
-        guests.push(guestData);
+        let guests = JSON.parse(localStorage.getItem('guests') || '[]');
+        guests.push(newGuest);
         localStorage.setItem('guests', JSON.stringify(guests));
     }
 
-    alert(`Registrasi Berhasil!\n\nNomor Registrasi / ID Tamu Anda:\n${guestId}\n\nGunakan ID ini untuk memeriksa status kunjungan.`);
+    alert(`Registrasi Berhasil!\nNomor ID / Kode Booking Anda: ${guestId}\nSimpan kode ini untuk mengecek status.`);
     document.getElementById('form-register').reset();
     showView('view-status');
 }
 
-// --- CEK STATUS BERDASARKAN ID TAMU (Requirement 7 & 11) ---
-async function checkGuestStatus() {
-    const guestIdInput = document.getElementById('check-guest-id').value.trim();
+// --- Check Status & Booking List ---
+async function checkStatus() {
+    const id = document.getElementById('check-guest-id').value.trim();
     const resultDiv = document.getElementById('status-result');
     resultDiv.style.display = 'block';
 
-    if (!guestIdInput) {
+    if (!id) {
         resultDiv.className = 'notif rejected';
-        resultDiv.innerText = 'Mohon masukkan Nomor Registrasi / ID Tamu.';
+        resultDiv.innerText = 'Masukkan Nomor Registrasi / ID Tamu terlebih dahulu.';
         return;
     }
 
     let guest = null;
     if (supabaseClient) {
-        const { data } = await supabaseClient.from('guests').select('*').eq('guest_id', guestIdInput).single();
-        if (data) guest = data;
+        const { data } = await supabaseClient.from('guests').select('*').eq('guest_id', id).single();
+        guest = data;
     } else {
-        let guests = JSON.parse(localStorage.getItem('guests')) || [];
-        guest = guests.find(g => g.guest_id === guestIdInput);
+        const guests = JSON.parse(localStorage.getItem('guests') || '[]');
+        guest = guests.find(g => g.guest_id === id);
     }
 
     if (!guest) {
         resultDiv.className = 'notif rejected';
-        resultDiv.innerText = 'ID Tamu tidak ditemukan.';
+        resultDiv.innerText = 'ID Tamu / Kode Booking tidak ditemukan di database.';
     } else {
-        let statusClass = 'pending';
-        let statusTextMsg = 'Status Kunjungan: PENDING (Menunggu Persetujuan)';
-        
+        let msg = `Tamu: <strong>${guest.fullname}</strong> (${guest.origin_company})<br>Status: <strong>${guest.status}</strong>`;
         if (guest.status === 'Approved') {
-            statusClass = 'success';
-            statusTextMsg = 'AKSES DISETUJUI (APPROVED)! Selamat datang di perusahaan.';
+            resultDiv.className = 'notif success';
+            msg += '<br><span style="color:#155724; font-size:1.1rem;">🔔 AKSES DISETUJUI (APPROVED)! Silakan masuk.</span>';
         } else if (guest.status === 'Rejected') {
-            statusClass = 'rejected';
-            statusTextMsg = 'AKSES DITOLAK (REJECTED).';
+            resultDiv.className = 'notif rejected';
+            msg += '<br>Maaf, kunjungan Anda tidak disetujui.';
+        } else {
+            resultDiv.className = 'notif pending';
+            msg += '<br>⏳ Menunggu persetujuan (Pending) dari Admin.';
         }
-
-        resultDiv.className = `notif ${statusClass}`;
-        resultDiv.innerHTML = `
-            <strong>${statusTextMsg}</strong><br><br>
-            <strong>ID Tamu:</strong> ${guest.guest_id}<br>
-            <strong>Nama:</strong> ${guest.fullname}<br>
-            <strong>Jenis & No ID:</strong> ${guest.id_type} - ${guest.id_number}<br>
-            <strong>Instansi:</strong> ${guest.origin_company}<br>
-            <strong>Tujuan:</strong> ${guest.purpose}
-        `;
+        resultDiv.innerHTML = msg;
     }
 }
 
-// --- LOGIN (Admin & Super Admin) ---
-let currentUserRole = null;
+async function loadRegisteredBookings() {
+    let guests = [];
+    if (supabaseClient) {
+        const { data } = await supabaseClient.from('guests').select('*').order('created_at', { ascending: false }).limit(20);
+        if (data) guests = data;
+    } else {
+        guests = JSON.parse(localStorage.getItem('guests') || '[]');
+    }
 
-async function handleLogin() {
-    const username = document.getElementById('login-username').value.trim();
-    const password = document.getElementById('login-password').value.trim();
+    const container = document.getElementById('registered-bookings-list');
+    container.innerHTML = '';
 
-    if (!username || !password) {
-        alert('Masukkan username dan password!');
+    if (guests.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#777;">Belum ada data tamu terdaftar.</p>';
         return;
     }
 
-    let user = null;
+    guests.forEach(g => {
+        let badgeColor = g.status === 'Approved' ? 'green' : (g.status === 'Rejected' ? 'red' : 'orange');
+        container.innerHTML += `
+            <div class="item-row">
+                <div>
+                    <strong>${g.guest_id}</strong> - ${g.fullname} (${g.origin_company})<br>
+                    <small>Tujuan: ${g.purpose}</small>
+                </div>
+                <div>
+                    <span style="padding:4px 8px; border-radius:4px; color:white; background:${badgeColor}; font-size:0.85rem;">${g.status}</span>
+                </div>
+            </div>
+        `;
+    });
+}
+
+// --- Login & Authentication ---
+let currentUserRole = null;
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const user = document.getElementById('login-username').value.trim();
+    const pass = document.getElementById('login-password').value.trim();
+
+    let loggedInUser = null;
+
     if (supabaseClient) {
-        const { data } = await supabaseClient.from('users').select('*').eq('username', username).eq('password', password).single();
-        if (data) user = data;
+        const { data } = await supabaseClient.from('users').select('*').eq('username', user).eq('password', pass).single();
+        loggedInUser = data;
     } else {
-        let users = JSON.parse(localStorage.getItem('users')) || [
-            { username: 'superadmin', password: 'superadmin123', role: 'super_admin' },
+        let users = JSON.parse(localStorage.getItem('users') || JSON.stringify([
+            { username: 'superadmin', password: 'super123', role: 'super_admin' },
             { username: 'admin', password: 'admin123', role: 'admin' }
-        ];
-        user = users.find(u => u.username === username && u.password === password);
+        ]));
+        loggedInUser = users.find(u => u.username === user && u.password === pass);
     }
 
-    if (user) {
-        currentUserRole = user.role;
-        document.getElementById('login-username').value = '';
-        document.getElementById('login-password').value = '';
-        
-        if (user.role === 'super_admin') {
+    if (loggedInUser) {
+        currentUserRole = loggedInUser.role;
+        document.getElementById('form-login').reset();
+        if (currentUserRole === 'super_admin') {
             showView('view-superadmin');
-            loadGuestsForSuperAdmin();
+            loadSuperAdminGuests();
+            loadManageApprovedCompanies();
+            loadManageIdTypes();
         } else {
             showView('view-admin');
-            loadGuestsForAdmin();
+            loadAdminGuests();
         }
     } else {
         alert('Username atau password salah!');
@@ -262,68 +352,65 @@ function logout() {
     showView('view-home');
 }
 
-// --- RESET PASSWORD (Requirement 6) ---
 async function handleResetPassword() {
-    const username = document.getElementById('reset-username').value.trim();
-    const newPassword = document.getElementById('reset-new-password').value.trim();
+    const user = document.getElementById('reset-username').value.trim();
+    const newPass = document.getElementById('reset-new-password').value.trim();
 
-    if (!username || !newPassword) {
-        alert('Semua field wajib diisi!');
+    if (!user || !newPass) {
+        alert('Mohon isi username dan password baru.');
         return;
     }
 
     if (supabaseClient) {
-        const { data, error } = await supabaseClient.from('users').update({ password: newPassword }).eq('username', username).select();
-        if (error || !data || data.length === 0) {
-            alert('Username tidak ditemukan.');
+        const { error } = await supabaseClient.from('users').update({ password: newPass }).eq('username', user);
+        if (error) {
+            alert('Gagal reset password: ' + error.message);
             return;
         }
     } else {
-        let users = JSON.parse(localStorage.getItem('users')) || [
-            { username: 'superadmin', password: 'superadmin123', role: 'super_admin' },
+        let users = JSON.parse(localStorage.getItem('users') || JSON.stringify([
+            { username: 'superadmin', password: 'super123', role: 'super_admin' },
             { username: 'admin', password: 'admin123', role: 'admin' }
-        ];
-        let found = users.find(u => u.username === username);
-        if (!found) {
+        ]));
+        let found = users.find(u => u.username === user);
+        if (found) {
+            found.password = newPass;
+            localStorage.setItem('users', JSON.stringify(users));
+        } else {
             alert('Username tidak ditemukan.');
             return;
         }
-        found.password = newPassword;
-        localStorage.setItem('users', JSON.stringify(users));
     }
 
-    alert('Password berhasil direset!');
-    document.getElementById('reset-username').value = '';
-    document.getElementById('reset-new-password').value = '';
-    showView('view-status');
+    alert('Password berhasil direset! Silakan login kembali.');
+    showView('view-login');
 }
 
-// --- ADMIN DASHBOARD ---
-async function loadGuestsForAdmin() {
+// --- Admin Dashboard Functions ---
+async function loadAdminGuests() {
     let guests = [];
     if (supabaseClient) {
         const { data } = await supabaseClient.from('guests').select('*').order('created_at', { ascending: false });
         if (data) guests = data;
     } else {
-        guests = JSON.parse(localStorage.getItem('guests')) || [];
+        guests = JSON.parse(localStorage.getItem('guests') || '[]');
     }
 
-    const container = document.getElementById('admin-guest-list');
+    const container = document.getElementById('admin-guest-container');
     container.innerHTML = '';
-
-    if (guests.length === 0) {
-        container.innerHTML = '<p>Belum ada data tamu.</p>';
-        return;
-    }
 
     guests.forEach(g => {
         container.innerHTML += `
-            <div class="record-item">
-                <strong>ID: ${g.guest_id}</strong> | ${g.fullname} (${g.origin_company})<br>
-                ID: ${g.id_type} (${g.id_number}) | Tujuan: ${g.purpose}<br>
-                Status: <strong>${g.status}</strong><br>
-                <button onclick="updateGuestStatus('${g.guest_id}', 'Approved')" class="btn-secondary" style="width:auto; padding:5px 10px; margin-top:5px;">Approve</button>
-                <button onclick="updateGuestStatus('${g.guest_id}', 'Rejected')" class="btn-danger" style="width:auto; padding:5px 10px; margin-top:5px;">Reject</button>
+            <div class="item-row">
+                <div>
+                    <strong>${g.guest_id}</strong> - ${g.fullname} (${g.origin_company})<br>
+                    <small>ID: ${g.id_type} (${g.id_number}) | Tujuan: ${g.purpose}</small><br>
+                    <small>Status: <strong>${g.status}</strong></small>
+                </div>
+                <div>
+                    <button onclick="updateGuestStatus('${g.guest_id}', 'Approved')" class="btn-secondary" style="padding:5px 10px; font-size:0.8rem;">Approve</button>
+                    <button onclick="updateGuestStatus('${g.guest_id}', 'Rejected')" class="btn-danger" style="padding:5px 10px; font-size:0.8rem; margin-top:3px;">Reject</button>
+                </div>
             </div>
         `;
     });
@@ -333,101 +420,32 @@ async function updateGuestStatus(guestId, status) {
     if (supabaseClient) {
         await supabaseClient.from('guests').update({ status: status }).eq('guest_id', guestId);
     } else {
-        let guests = JSON.parse(localStorage.getItem('guests')) || [];
-        let g = guests.find(item => item.guest_id === guestId);
-        if (g) g.status = status;
-        localStorage.setItem('guests', JSON.stringify(guests));
-    }
-    loadGuestsForAdmin();
-}
-
-// --- SUPER ADMIN FUNCTIONS (Requirement 8, 9, 10) ---
-async function loadGuestsForSuperAdmin() {
-    let guests = [];
-    if (supabaseClient) {
-        const { data } = await supabaseClient.from('guests').select('*').order('created_at', { ascending: false });
-        if (data) guests = data;
-    } else {
-        guests = JSON.parse(localStorage.getItem('guests')) || [];
-    }
-
-    const container = document.getElementById('superadmin-guest-list');
-    container.innerHTML = '';
-
-    if (guests.length === 0) {
-        container.innerHTML = '<p>Belum ada data tamu.</p>';
-        return;
-    }
-
-    guests.forEach(g => {
-        container.innerHTML += `
-            <div class="record-item">
-                <strong>ID: ${g.guest_id}</strong> | ${g.fullname} (${g.origin_company})<br>
-                Status: <strong>${g.status}</strong> | Waktu: ${new Date(g.created_at).toLocaleString()}<br>
-                <button onclick="deleteGuestRecord('${g.guest_id}')" class="btn-danger" style="width:auto; padding:4px 8px; margin-top:5px;">Hapus Tamu</button>
-            </div>
-        `;
-    });
-}
-
-async function deleteGuestRecord(guestId) {
-    if (confirm('Yakin ingin menghapus data tamu ini (selesai kunjungan / record lama)?')) {
-        if (supabaseClient) {
-            await supabaseClient.from('guests').delete().eq('guest_id', guestId);
-        } else {
-            let guests = JSON.parse(localStorage.getItem('guests')) || [];
-            guests = guests.filter(g => g.guest_id !== guestId);
+        let guests = JSON.parse(localStorage.getItem('guests') || '[]');
+        let g = guests.find(x => x.guest_id === guestId);
+        if (g) {
+            g.status = status;
             localStorage.setItem('guests', JSON.stringify(guests));
         }
-        loadGuestsForSuperAdmin();
     }
+    loadAdminGuests();
 }
 
-async function addApprovedCompany() {
-    const name = document.getElementById('new-company-name').value.trim();
-    if (!name) return;
-
-    if (supabaseClient) {
-        await supabaseClient.from('approved_companies').insert([{ company_name: name }]);
-    } else {
-        let companies = JSON.parse(localStorage.getItem('approved_companies')) || [];
-        if (!companies.includes(name)) companies.push(name);
-        localStorage.setItem('approved_companies', JSON.stringify(companies));
-    }
-
-    document.getElementById('new-company-name').value = '';
-    loadApprovedCompaniesDropdown();
-    alert('PT berhasil ditambahkan ke whitelist.');
-}
-
-async function addIdType() {
-    const typeName = document.getElementById('new-id-type').value.trim();
-    if (!typeName) return;
-
-    if (supabaseClient) {
-        await supabaseClient.from('id_types').insert([{ type_name: typeName }]);
-    } else {
-        let idTypes = JSON.parse(localStorage.getItem('id_types')) || ['KTP', 'SIM', 'Paspor'];
-        if (!idTypes.includes(typeName)) idTypes.push(typeName);
-        localStorage.setItem('id_types', JSON.stringify(idTypes));
-    }
-
-    document.getElementById('new-id-type').value = '';
-    loadIdTypesDropdown();
-    alert('Jenis ID berhasil ditambahkan.');
-}
-
-// Upload Logo / Wallpaper via Local Location (FileReader Base64)
-async function saveConfiguration() {
+// --- Super Admin Dashboard Functions ---
+async function saveWebConfiguration() {
     const ptName = document.getElementById('config-pt-name').value.trim();
-    const logoFile = document.getElementById('config-logo-file').files[0];
-    const wallpaperFile = document.getElementById('config-wallpaper-file').files[0];
+    const logoFile = document.getElementById('config-logo').files[0];
+    const wallFile = document.getElementById('config-wallpaper').files[0];
+
+    let settings = {};
+    if (!supabaseClient) {
+        settings = JSON.parse(localStorage.getItem('web_settings') || '{}');
+    }
 
     if (ptName) {
         if (supabaseClient) {
-            await supabaseClient.from('web_settings').update({ setting_value: ptName }).eq('setting_key', 'company_name');
+            await supabaseClient.from('web_settings').upsert({ setting_key: 'company_name', setting_value: ptName }, { onConflict: 'setting_key' });
         } else {
-            localStorage.setItem('company_name', ptName);
+            settings.company_name = ptName;
         }
     }
 
@@ -436,128 +454,205 @@ async function saveConfiguration() {
         reader.onload = async (e) => {
             const base64Logo = e.target.result;
             if (supabaseClient) {
-                await supabaseClient.from('web_settings').update({ setting_value: base64Logo }).eq('setting_key', 'logo_url');
+                await supabaseClient.from('web_settings').upsert({ setting_key: 'logo_url', setting_value: base64Logo }, { onConflict: 'setting_key' });
             } else {
-                localStorage.setItem('logo_url', base64Logo);
+                settings.logo_url = base64Logo;
+                localStorage.setItem('web_settings', JSON.stringify(settings));
             }
             loadWebSettings();
         };
         reader.readAsDataURL(logoFile);
     }
 
-    if (wallpaperFile) {
+    if (wallFile) {
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const base64Wallpaper = e.target.result;
+            const base64Wall = e.target.result;
             if (supabaseClient) {
-                await supabaseClient.from('web_settings').update({ setting_value: base64Wallpaper }).eq('setting_key', 'wallpaper_url');
+                await supabaseClient.from('web_settings').upsert({ setting_key: 'wallpaper_url', setting_value: base64Wall }, { onConflict: 'setting_key' });
             } else {
-                localStorage.setItem('wallpaper_url', base64Wallpaper);
+                settings.wallpaper_url = base64Wall;
+                localStorage.setItem('web_settings', JSON.stringify(settings));
             }
             loadWebSettings();
         };
-        reader.readAsDataURL(wallpaperFile);
+        reader.readAsDataURL(wallFile);
     }
 
-    alert('Konfigurasi web berhasil disimpan!');
+    if (!supabaseClient) {
+        localStorage.setItem('web_settings', JSON.stringify(settings));
+    }
+
+    alert('Konfigurasi berhasil disimpan!');
     setTimeout(loadWebSettings, 500);
 }
 
-async function resetConfiguration() {
-    if (confirm('Yakin ingin menghapus dan mereset semua konfigurasi pada web?')) {
+async function resetAllConfigurations() {
+    if (confirm('Yakin ingin mereset seluruh konfigurasi web (Nama PT, Logo, Wallpaper)?')) {
         if (supabaseClient) {
-            await supabaseClient.from('web_settings').update({ setting_value: 'PT Solusi Teknologi Indonesia' }).eq('setting_key', 'company_name');
-            await supabaseClient.from('web_settings').update({ setting_value: '' }).eq('setting_key', 'logo_url');
-            await supabaseClient.from('web_settings').update({ setting_value: '' }).eq('setting_key', 'wallpaper_url');
+            await supabaseClient.from('web_settings').upsert({ setting_key: 'company_name', setting_value: 'PT Solusi Teknologi Indonesia' }, { onConflict: 'setting_key' });
+            await supabaseClient.from('web_settings').upsert({ setting_key: 'logo_url', setting_value: '' }, { onConflict: 'setting_key' });
+            await supabaseClient.from('web_settings').upsert({ setting_key: 'wallpaper_url', setting_value: '' }, { onConflict: 'setting_key' });
         } else {
-            localStorage.removeItem('company_name');
-            localStorage.removeItem('logo_url');
-            localStorage.removeItem('wallpaper_url');
+            localStorage.removeItem('web_settings');
         }
+        document.getElementById('app-logo').style.display = 'none';
+        document.body.style.backgroundImage = 'none';
         loadWebSettings();
-        alert('Semua konfigurasi web telah direset ke default.');
+        alert('Semua konfigurasi berhasil dihapus/direset.');
     }
 }
 
-// --- MULTI-LANGUAGE ---
-const dictionary = {
-    id: {
-        welcome: "Selamat Datang di Portal Tamu",
-        subtitle: "Silakan mulai registrasi kunjungan Anda atau cek status kunjungan.",
-        getStarted: "Get Started (Registrasi Tamu)",
-        gotoStatus: "Cek Status Kunjungan & Login",
-        regTitle: "Form Registrasi Tamu",
-        lblFullname: "Nama Lengkap",
-        lblIdType: "Jenis ID",
-        lblIdNumber: "Nomor ID (KTP/SIM/Paspor)",
-        lblCompany: "Asal Instansi / Perusahaan",
-        lblPurpose: "Tujuan Kunjungan",
-        btnSubmitReg: "Kirim Registrasi",
-        btnBack: "Kembali",
-        statusTitle: "Cek Status Kunjungan",
-        statusDesc: "Masukkan Nomor Registrasi / ID Tamu Anda untuk memeriksa status.",
-        btnCheckStatus: "Periksa Status",
-        loginTitle: "Login Admin & Super Admin",
-        btnLogin: "Login",
-        linkReset: "Lupa / Reset Password?",
-        resetTitle: "Reset Password Akun",
-        resetDesc: "Masukkan username Anda dan buat password baru.",
-        btnResetSubmit: "Simpan Password Baru"
-    },
-    en: {
-        welcome: "Welcome to Guest Portal",
-        subtitle: "Please start your visit registration or check your visit status.",
-        getStarted: "Get Started (Guest Registration)",
-        gotoStatus: "Check Visit Status & Login",
-        regTitle: "Guest Registration Form",
-        lblFullname: "Full Name",
-        lblIdType: "ID Type",
-        lblIdNumber: "ID Number (ID/Driver License/Passport)",
-        lblCompany: "Origin Institution / Company",
-        lblPurpose: "Purpose of Visit",
-        btnSubmitReg: "Submit Registration",
-        btnBack: "Back",
-        statusTitle: "Check Visit Status",
-        statusDesc: "Enter your Registration Number / Guest ID to check your status.",
-        btnCheckStatus: "Check Status",
-        loginTitle: "Admin & Super Admin Login",
-        btnLogin: "Login",
-        linkReset: "Forgot / Reset Password?",
-        resetTitle: "Reset Account Password",
-        resetDesc: "Enter your username and create a new password.",
-        btnResetSubmit: "Save New Password"
+// Whitelist PT Management
+async function addApprovedCompany() {
+    const compName = document.getElementById('new-approved-company').value.trim();
+    if (!compName) return;
+
+    if (supabaseClient) {
+        await supabaseClient.from('approved_companies').insert([{ company_name: compName }]);
+    } else {
+        let comps = JSON.parse(localStorage.getItem('approved_companies') || '[]');
+        if (!comps.includes(compName)) comps.push(compName);
+        localStorage.setItem('approved_companies', JSON.stringify(comps));
     }
-};
 
-function changeLanguage() {
-    const lang = document.getElementById('lang-select').value;
-    const dict = dictionary[lang];
+    document.getElementById('new-approved-company').value = '';
+    loadManageApprovedCompanies();
+    loadDropdownData();
+}
 
-    document.getElementById('txt-welcome').innerText = dict.welcome;
-    document.getElementById('txt-subtitle').innerText = dict.subtitle;
-    document.getElementById('btn-get-started').innerText = dict.getStarted;
-    document.getElementById('btn-goto-status').innerText = dict.gotoStatus;
-    
-    document.getElementById('txt-reg-title').innerText = dict.regTitle;
-    document.getElementById('lbl-fullname').innerText = dict.lblFullname;
-    document.getElementById('lbl-idtype').innerText = dict.lblIdType;
-    document.getElementById('lbl-idnumber').innerText = dict.lblIdNumber;
-    document.getElementById('lbl-company').innerText = dict.lblCompany;
-    document.getElementById('lbl-purpose').innerText = dict.lblPurpose;
-    document.getElementById('btn-submit-reg').innerText = dict.btnSubmitReg;
-    
-    document.getElementById('btn-back-1').innerText = dict.btnBack;
-    document.getElementById('btn-back-2').innerText = dict.btnBack;
-    document.getElementById('btn-back-3').innerText = dict.btnBack;
+async function loadManageApprovedCompanies() {
+    let comps = [];
+    if (supabaseClient) {
+        const { data } = await supabaseClient.from('approved_companies').select('*');
+        if (data) comps = data;
+    } else {
+        let arr = JSON.parse(localStorage.getItem('approved_companies') || '[]');
+        comps = arr.map((c, i) => ({ id: i, company_name: c }));
+    }
 
-    document.getElementById('txt-status-title').innerText = dict.statusTitle;
-    document.getElementById('txt-status-desc').innerText = dict.statusDesc;
-    document.getElementById('btn-check-status').innerText = dict.btnCheckStatus;
-    document.getElementById('txt-login-title').innerText = dict.loginTitle;
-    document.getElementById('btn-login').innerText = dict.btnLogin;
-    document.getElementById('link-reset').innerText = dict.linkReset;
+    const container = document.getElementById('approved-companies-manage-list');
+    container.innerHTML = '';
 
-    document.getElementById('txt-reset-title').innerText = dict.resetTitle;
-    document.getElementById('txt-reset-desc').innerText = dict.resetDesc;
-    document.getElementById('btn-reset-submit').innerText = dict.btnResetSubmit;
+    comps.forEach(c => {
+        container.innerHTML += `
+            <div class="item-row">
+                <span>${c.company_name}</span>
+                <button onclick="deleteApprovedCompany(${c.id}, '${c.company_name}')" class="btn-danger" style="width:auto; padding:3px 8px; font-size:0.8rem;">Hapus</button>
+            </div>
+        `;
+    });
+}
+
+async function deleteApprovedCompany(id, name) {
+    if (confirm(`Hapus PT ${name} dari daftar disetujui?`)) {
+        if (supabaseClient) {
+            await supabaseClient.from('approved_companies').delete().eq('id', id);
+        } else {
+            let comps = JSON.parse(localStorage.getItem('approved_companies') || '[]');
+            comps = comps.filter(c => c !== name);
+            localStorage.setItem('approved_companies', JSON.stringify(comps));
+        }
+        loadManageApprovedCompanies();
+        loadDropdownData();
+    }
+}
+
+// ID Types Management
+async function addIdType() {
+    const typeName = document.getElementById('new-id-type').value.trim();
+    if (!typeName) return;
+
+    if (supabaseClient) {
+        await supabaseClient.from('id_types').insert([{ name: typeName }]);
+    } else {
+        let types = JSON.parse(localStorage.getItem('id_types') || '[]');
+        if (!types.includes(typeName)) types.push(typeName);
+        localStorage.setItem('id_types', JSON.stringify(types));
+    }
+
+    document.getElementById('new-id-type').value = '';
+    loadManageIdTypes();
+    loadDropdownData();
+}
+
+async function loadManageIdTypes() {
+    let types = [];
+    if (supabaseClient) {
+        const { data } = await supabaseClient.from('id_types').select('*');
+        if (data) types = data;
+    } else {
+        let arr = JSON.parse(localStorage.getItem('id_types') || '[]');
+        types = arr.map((t, i) => ({ id: i, name: t }));
+    }
+
+    const container = document.getElementById('id-types-manage-list');
+    container.innerHTML = '';
+
+    types.forEach(t => {
+        container.innerHTML += `
+            <div class="item-row">
+                <span>${t.name}</span>
+                <button onclick="deleteIdType(${t.id}, '${t.name}')" class="btn-danger" style="width:auto; padding:3px 8px; font-size:0.8rem;">Hapus</button>
+            </div>
+        `;
+    });
+}
+
+async function deleteIdType(id, name) {
+    if (confirm(`Hapus Jenis ID ${name}?`)) {
+        if (supabaseClient) {
+            await supabaseClient.from('id_types').delete().eq('id', id);
+        } else {
+            let types = JSON.parse(localStorage.getItem('id_types') || '[]');
+            types = types.filter(t => t !== name);
+            localStorage.setItem('id_types', JSON.stringify(types));
+        }
+        loadManageIdTypes();
+        loadDropdownData();
+    }
+}
+
+// Guest Records Management (Super Admin)
+async function loadSuperAdminGuests() {
+    let guests = [];
+    if (supabaseClient) {
+        const { data } = await supabaseClient.from('guests').select('*').order('created_at', { ascending: false });
+        if (data) guests = data;
+    } else {
+        guests = JSON.parse(localStorage.getItem('guests') || '[]');
+    }
+
+    const container = document.getElementById('superadmin-guest-container');
+    container.innerHTML = '';
+
+    if (guests.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#777;">Tidak ada data tamu.</p>';
+        return;
+    }
+
+    guests.forEach(g => {
+        container.innerHTML += `
+            <div class="item-row">
+                <div>
+                    <strong>${g.guest_id}</strong> - ${g.fullname} (${g.origin_company})<br>
+                    <small>Status: ${g.status} | Dibuat: ${new Date(g.created_at).toLocaleString()}</small>
+                </div>
+                <button onclick="deleteGuestRecord('${g.guest_id}')" class="btn-danger" style="width:auto; padding:5px 10px; font-size:0.8rem;">Hapus</button>
+            </div>
+        `;
+    });
+}
+
+async function deleteGuestRecord(guestId) {
+    if (confirm(`Hapus permanen data tamu ${guestId}?`)) {
+        if (supabaseClient) {
+            await supabaseClient.from('guests').delete().eq('guest_id', guestId);
+        } else {
+            let guests = JSON.parse(localStorage.getItem('guests') || '[]');
+            guests = guests.filter(g => g.guest_id !== guestId);
+            localStorage.setItem('guests', JSON.stringify(guests));
+        }
+        loadSuperAdminGuests();
+    }
 }

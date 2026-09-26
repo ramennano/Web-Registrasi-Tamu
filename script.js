@@ -1,4 +1,3 @@
-// Konfigurasi Supabase (Ganti dengan kredensial Supabase Anda)
 const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU';
 
@@ -21,7 +20,7 @@ const dictionary = {
         gotoLogin: "Login Admin & Super Admin",
         regTitle: "Registrasi Tamu",
         fullname: "Nama Lengkap", idType: "Jenis ID", idNumber: "Nomor ID", company: "Asal Instansi / Perusahaan", purpose: "Tujuan Kunjungan", submitReg: "Daftar Sekarang",
-        statusTitle: "Cek Status Kunjungan", statusDesc: "Masukkan ID Tamu / No Registrasi Anda untuk memeriksa status approve.", checkStatusBtn: "Cek Status",
+        statusTitle: "Cek Status Kunjungan", statusDesc: "Masukkan ID Tamu / Nomor Registrasi Anda untuk memeriksa status approve.", checkStatusBtn: "Cek Status",
         loginTitle: "Login Admin & Super Admin"
     },
     en: {
@@ -32,7 +31,7 @@ const dictionary = {
         gotoLogin: "Admin & Super Admin Login",
         regTitle: "Guest Registration",
         fullname: "Full Name", idType: "ID Type", idNumber: "ID Number", company: "Origin Company", purpose: "Purpose of Visit", submitReg: "Register Now",
-        statusTitle: "Check Visit Status", statusDesc: "Enter your Guest ID to check approve status.", checkStatusBtn: "Check Status",
+        statusTitle: "Check Visit Status", statusDesc: "Enter your Guest ID / Registration Number to check status.", checkStatusBtn: "Check Status",
         loginTitle: "Admin & Super Admin Login"
     }
 };
@@ -60,7 +59,7 @@ function changeLanguage() {
     document.getElementById('txt-login-title').innerText = t.loginTitle;
 }
 
-// Navigasi Tampilan (View Switcher)
+// Navigasi Tampilan
 function showView(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
@@ -69,19 +68,9 @@ function showView(viewId) {
 window.onload = async () => {
     await loadWebSettings();
     await loadDropdownData();
-    setupLoginEnterKey();
 };
 
-function setupLoginEnterKey() {
-    const passInput = document.getElementById('login-password');
-    if (passInput) {
-        passInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin(e);
-        });
-    }
-}
-
-// --- Load Web Settings (Logo, Wallpaper, PT) ---
+// --- Web Settings (Logo, Wallpaper, Nama PT) ---
 async function loadWebSettings() {
     let settings = {};
     if (supabaseClient) {
@@ -145,7 +134,6 @@ async function handleRegister(e) {
     };
 
     if (supabaseClient) {
-        // Autosave manual company if new
         const { data: exist } = await supabaseClient.from('approved_companies').select('*').eq('company_name', compInput).single();
         if (!exist) await supabaseClient.from('approved_companies').insert([{ company_name: compInput }]);
         await supabaseClient.from('guests').insert([newGuest]);
@@ -155,12 +143,12 @@ async function handleRegister(e) {
         if (!comps.includes(compInput)) { comps.push(compInput); localStorage.setItem('approved_companies', JSON.stringify(comps)); }
     }
 
-    alert(`Registrasi Berhasil!\nKode Booking / ID Tamu Anda: ${guestId}\nSimpan nomor ini untuk memeriksa status.`);
+    alert(`Registrasi Berhasil!\nKode Booking / ID Tamu Anda: ${guestId}\nSimpan ID ini untuk memeriksa status.`);
     document.getElementById('form-register').reset();
     showView('view-home');
 }
 
-// --- Cek Status Realtime ---
+// --- Cek Status & Notifikasi Approve ---
 async function checkStatus() {
     const id = document.getElementById('check-guest-id').value.trim();
     const resDiv = document.getElementById('status-result');
@@ -182,9 +170,9 @@ async function checkStatus() {
     } else {
         let msg = `Tamu: <strong>${guest.fullname}</strong> (${guest.origin_company})<br>Status: <strong>${guest.status}</strong>`;
         if (guest.status === 'Approved') {
-            resDiv.className = 'notif success'; msg += '<br>✨ NOTIFIKASI: AKSES DISETUJUI (APPROVED)! Silakan masuk.';
+            resDiv.className = 'notif success'; msg += '<br>🔔 NOTIFIKASI: AKSES DISETUJUI (APPROVED)! Silakan masuk.';
         } else if (guest.status === 'Rejected') {
-            resDiv.className = 'notif rejected'; msg += '<br>Maaf, kunjungan ditolak.';
+            resDiv.className = 'notif rejected'; msg += '<br>Maaf, kunjungan Anda ditolak.';
         } else {
             resDiv.className = 'notif pending'; msg += '<br>Status kunjungan masih dalam proses verifikasi admin (Pending).';
         }
@@ -235,7 +223,7 @@ async function handleResetPassword() {
     alert('Password berhasil diubah! Silakan login kembali.'); showView('view-login');
 }
 
-// --- Admin (Approve) Dashboard ---
+// --- Admin (Approval) Functions ---
 async function loadAdminGuests() {
     let guests = [];
     if (supabaseClient) {
@@ -306,7 +294,7 @@ async function resetAllConfigurations() {
     }
 }
 
-// Manajemen User Approve (Admin)
+// Super Admin: Tambah/Hapus User Approve (Admin)
 async function addApproveUser() {
     const u = document.getElementById('new-admin-username').value.trim();
     const p = document.getElementById('new-admin-password').value.trim();
@@ -347,7 +335,7 @@ async function deleteUser(username) {
     }
 }
 
-// Manajemen History Tamu
+// Super Admin: Hapus Data Tamu
 async function loadSuperAdminGuests() {
     let guests = [];
     if (supabaseClient) { const { data } = await supabaseClient.from('guests').select('*'); guests = data || []; }
@@ -370,7 +358,7 @@ async function deleteGuest(id) {
     }
 }
 
-// Manajemen PT & Jenis ID
+// Super Admin: Tambah/Hapus Whitelist PT & Jenis ID
 async function addApprovedCompany() {
     const c = document.getElementById('new-approved-company').value.trim(); if (!c) return;
     if (supabaseClient) await supabaseClient.from('approved_companies').insert([{ company_name: c }]);

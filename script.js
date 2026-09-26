@@ -1,4 +1,4 @@
-// Ganti dengan kredensial Supabase Anda
+// Konfigurasi Supabase (Ganti dengan kredensial Supabase Anda)
 const SUPABASE_URL = 'https://gyortxfcoifxzrwfogzr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3J0eGZjb2lmeHpyd2ZvZ3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNzE2NzEsImV4cCI6MjEwNTc0NzY3MX0.dO07GyxM9WYRMHYOE70-nJQI_TONr7SXK7loXLRdkHU';
 
@@ -11,19 +11,27 @@ try {
     console.warn('Supabase tidak terhubung, menggunakan LocalStorage fallback.');
 }
 
-// --- Kamus Bahasa ---
-const dict = {
+// --- Multi-Language Dictionary ---
+const dictionary = {
     id: {
-        welcome: "Selamat Datang di Portal Tamu", subtitle: "Silakan pilih menu di bawah ini untuk melanjutkan.",
-        getStarted: "Get Started (Registrasi Tamu)", gotoStatus: "Cek Status Kunjungan", gotoLogin: "Login Admin & Super Admin",
-        regTitle: "Registrasi Tamu", fullname: "Nama Lengkap", idType: "Jenis ID", idNumber: "Nomor ID", company: "Asal Instansi / Perusahaan", purpose: "Tujuan Kunjungan", submitReg: "Daftar Sekarang",
-        statusTitle: "Cek Status Kunjungan", statusDesc: "Masukkan ID Tamu Anda untuk memeriksa status approve.", checkStatusBtn: "Cek Status",
+        welcome: "Selamat Datang di Portal Tamu",
+        subtitle: "Silakan pilih menu di bawah ini untuk melanjutkan.",
+        getStarted: "Get Started (Registrasi Tamu)",
+        gotoStatus: "Cek Status Kunjungan",
+        gotoLogin: "Login Admin & Super Admin",
+        regTitle: "Registrasi Tamu",
+        fullname: "Nama Lengkap", idType: "Jenis ID", idNumber: "Nomor ID", company: "Asal Instansi / Perusahaan", purpose: "Tujuan Kunjungan", submitReg: "Daftar Sekarang",
+        statusTitle: "Cek Status Kunjungan", statusDesc: "Masukkan ID Tamu / No Registrasi Anda untuk memeriksa status approve.", checkStatusBtn: "Cek Status",
         loginTitle: "Login Admin & Super Admin"
     },
     en: {
-        welcome: "Welcome to Guest Portal", subtitle: "Please select an option below to proceed.",
-        getStarted: "Get Started (Guest Registration)", gotoStatus: "Check Visit Status", gotoLogin: "Admin & Super Admin Login",
-        regTitle: "Guest Registration", fullname: "Full Name", idType: "ID Type", idNumber: "ID Number", company: "Origin Company", purpose: "Purpose of Visit", submitReg: "Register Now",
+        welcome: "Welcome to Guest Portal",
+        subtitle: "Please select an option below to proceed.",
+        getStarted: "Get Started (Guest Registration)",
+        gotoStatus: "Check Visit Status",
+        gotoLogin: "Admin & Super Admin Login",
+        regTitle: "Guest Registration",
+        fullname: "Full Name", idType: "ID Type", idNumber: "ID Number", company: "Origin Company", purpose: "Purpose of Visit", submitReg: "Register Now",
         statusTitle: "Check Visit Status", statusDesc: "Enter your Guest ID to check approve status.", checkStatusBtn: "Check Status",
         loginTitle: "Admin & Super Admin Login"
     }
@@ -33,7 +41,7 @@ let currentLang = 'id';
 
 function changeLanguage() {
     currentLang = document.getElementById('lang-select').value;
-    const t = dict[currentLang];
+    const t = dictionary[currentLang];
     document.getElementById('txt-welcome').innerText = t.welcome;
     document.getElementById('txt-subtitle').innerText = t.subtitle;
     document.getElementById('btn-get-started').innerText = t.getStarted;
@@ -52,7 +60,7 @@ function changeLanguage() {
     document.getElementById('txt-login-title').innerText = t.loginTitle;
 }
 
-// --- Navigasi & Inisialisasi ---
+// Navigasi Tampilan (View Switcher)
 function showView(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
@@ -61,9 +69,19 @@ function showView(viewId) {
 window.onload = async () => {
     await loadWebSettings();
     await loadDropdownData();
+    setupLoginEnterKey();
 };
 
-// --- Web Settings (Logo, Wallpaper, PT) ---
+function setupLoginEnterKey() {
+    const passInput = document.getElementById('login-password');
+    if (passInput) {
+        passInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin(e);
+        });
+    }
+}
+
+// --- Load Web Settings (Logo, Wallpaper, PT) ---
 async function loadWebSettings() {
     let settings = {};
     if (supabaseClient) {
@@ -73,12 +91,17 @@ async function loadWebSettings() {
         settings = JSON.parse(localStorage.getItem('web_settings') || '{}');
     }
 
-    if (settings.company_name) document.getElementById('app-company-name').innerText = settings.company_name;
+    if (settings.company_name) {
+        document.getElementById('app-company-name').innerText = settings.company_name;
+        document.title = settings.company_name;
+    }
     if (settings.logo_url) {
         const logo = document.getElementById('app-logo');
         logo.src = settings.logo_url; logo.style.display = 'inline-block';
     }
-    if (settings.wallpaper_url) document.body.style.backgroundImage = `url('${settings.wallpaper_url}')`;
+    if (settings.wallpaper_url) {
+        document.body.style.backgroundImage = `url('${settings.wallpaper_url}')`;
+    }
 }
 
 async function loadDropdownData() {
@@ -89,8 +112,8 @@ async function loadDropdownData() {
         const idRes = await supabaseClient.from('id_types').select('name');
         if (idRes.data) idTypes = idRes.data.map(i => i.name);
     } else {
-        companies = JSON.parse(localStorage.getItem('approved_companies') || '["PT Maju Bersama"]');
-        idTypes = JSON.parse(localStorage.getItem('id_types') || '["KTP", "SIM"]');
+        companies = JSON.parse(localStorage.getItem('approved_companies') || '["PT Maju Bersama", "PT Teknologi Nusantara"]');
+        idTypes = JSON.parse(localStorage.getItem('id_types') || '["KTP", "SIM", "Paspor"]');
     }
 
     const datalist = document.getElementById('approved-companies-list');
@@ -105,20 +128,24 @@ async function loadDropdownData() {
     });
 }
 
-// --- Registrasi Tamu (Dengan Autosave PT Manual) ---
+// --- Registrasi Tamu ---
 async function handleRegister(e) {
     e.preventDefault();
     const guestId = 'GST-' + Math.floor(100000 + Math.random() * 900000);
     const compInput = document.getElementById('reg-company').value.trim();
 
     const newGuest = {
-        guest_id: guestId, fullname: document.getElementById('reg-name').value,
-        id_type: document.getElementById('reg-id-type').value, id_number: document.getElementById('reg-id-number').value,
-        origin_company: compInput, purpose: document.getElementById('reg-purpose').value, status: 'Pending'
+        guest_id: guestId,
+        fullname: document.getElementById('reg-name').value,
+        id_type: document.getElementById('reg-id-type').value,
+        id_number: document.getElementById('reg-id-number').value,
+        origin_company: compInput,
+        purpose: document.getElementById('reg-purpose').value,
+        status: 'Pending'
     };
 
     if (supabaseClient) {
-        // Autosave PT Manual
+        // Autosave manual company if new
         const { data: exist } = await supabaseClient.from('approved_companies').select('*').eq('company_name', compInput).single();
         if (!exist) await supabaseClient.from('approved_companies').insert([{ company_name: compInput }]);
         await supabaseClient.from('guests').insert([newGuest]);
@@ -128,16 +155,20 @@ async function handleRegister(e) {
         if (!comps.includes(compInput)) { comps.push(compInput); localStorage.setItem('approved_companies', JSON.stringify(comps)); }
     }
 
-    alert(`Registrasi Berhasil!\nID Tamu Anda: ${guestId}\nSimpan ID ini untuk cek status.`);
+    alert(`Registrasi Berhasil!\nKode Booking / ID Tamu Anda: ${guestId}\nSimpan nomor ini untuk memeriksa status.`);
     document.getElementById('form-register').reset();
     showView('view-home');
 }
 
-// --- Cek Status Realtime & Notifikasi Approve ---
+// --- Cek Status Realtime ---
 async function checkStatus() {
     const id = document.getElementById('check-guest-id').value.trim();
     const resDiv = document.getElementById('status-result');
-    if (!id) { resDiv.style.display = 'block'; resDiv.className = 'notif rejected'; resDiv.innerText = 'Masukkan ID Tamu.'; return; }
+    resDiv.style.display = 'block';
+
+    if (!id) {
+        resDiv.className = 'notif rejected'; resDiv.innerText = 'Mohon masukkan ID Tamu.'; return;
+    }
 
     let guest = null;
     if (supabaseClient) {
@@ -146,17 +177,16 @@ async function checkStatus() {
         const guests = JSON.parse(localStorage.getItem('guests') || '[]'); guest = guests.find(g => g.guest_id === id);
     }
 
-    resDiv.style.display = 'block';
     if (!guest) {
-        resDiv.className = 'notif rejected'; resDiv.innerText = 'ID Tamu tidak ditemukan.';
+        resDiv.className = 'notif rejected'; resDiv.innerText = 'Nomor Registrasi / ID Tamu tidak ditemukan.';
     } else {
         let msg = `Tamu: <strong>${guest.fullname}</strong> (${guest.origin_company})<br>Status: <strong>${guest.status}</strong>`;
         if (guest.status === 'Approved') {
-            resDiv.className = 'notif success'; msg += '<br>🔔 AKSES DISETUJUI (APPROVED)! Silakan masuk.';
+            resDiv.className = 'notif success'; msg += '<br>✨ NOTIFIKASI: AKSES DISETUJUI (APPROVED)! Silakan masuk.';
         } else if (guest.status === 'Rejected') {
-            resDiv.className = 'notif rejected'; msg += '<br>Kunjungan ditolak.';
+            resDiv.className = 'notif rejected'; msg += '<br>Maaf, kunjungan ditolak.';
         } else {
-            resDiv.className = 'notif pending'; msg += '<br>Menunggu persetujuan Admin.';
+            resDiv.className = 'notif pending'; msg += '<br>Status kunjungan masih dalam proses verifikasi admin (Pending).';
         }
         resDiv.innerHTML = msg;
     }
@@ -174,7 +204,7 @@ async function handleLogin(e) {
     if (supabaseClient) {
         const { data } = await supabaseClient.from('users').select('*').eq('username', user).eq('password', pass).single(); loggedIn = data;
     } else {
-        let users = JSON.parse(localStorage.getItem('users') || '[{"username":"superadmin","password":"123","role":"super_admin"},{"username":"admin","password":"123","role":"admin"}]');
+        let users = JSON.parse(localStorage.getItem('users') || '[{"username":"superadmin","password":"super123","role":"super_admin"},{"username":"admin","password":"admin123","role":"admin"}]');
         loggedIn = users.find(u => u.username === user && u.password === pass);
     }
 
@@ -185,15 +215,15 @@ async function handleLogin(e) {
         } else {
             showView('view-admin'); loadAdminGuests();
         }
-    } else { alert('Username / password salah!'); }
+    } else { alert('Username atau password salah!'); }
 }
 
 function logout() { currentUserRole = null; showView('view-home'); }
 
 async function handleResetPassword() {
-    const user = document.getElementById('reset-username').value;
-    const newPass = document.getElementById('reset-new-password').value;
-    if (!user || !newPass) return alert('Isi form dengan lengkap.');
+    const user = document.getElementById('reset-username').value.trim();
+    const newPass = document.getElementById('reset-new-password').value.trim();
+    if (!user || !newPass) return alert('Semua field harus diisi.');
 
     if (supabaseClient) {
         await supabaseClient.from('users').update({ password: newPass }).eq('username', user);
@@ -202,10 +232,10 @@ async function handleResetPassword() {
         let f = users.find(u => u.username === user);
         if (f) { f.password = newPass; localStorage.setItem('users', JSON.stringify(users)); }
     }
-    alert('Password direset. Silakan login kembali.'); showView('view-login');
+    alert('Password berhasil diubah! Silakan login kembali.'); showView('view-login');
 }
 
-// --- Admin (User Approve) Dashboard ---
+// --- Admin (Approve) Dashboard ---
 async function loadAdminGuests() {
     let guests = [];
     if (supabaseClient) {
@@ -218,8 +248,8 @@ async function loadAdminGuests() {
             <div class="item-row">
                 <div><strong>${g.guest_id}</strong> - ${g.fullname}<br><small>PT: ${g.origin_company} | Status: <b>${g.status}</b></small></div>
                 <div>
-                    <button onclick="updateGuestStatus('${g.guest_id}', 'Approved')" class="btn-secondary" style="padding:5px; font-size:0.8rem;">Approve</button>
-                    <button onclick="updateGuestStatus('${g.guest_id}', 'Rejected')" class="btn-danger" style="padding:5px; font-size:0.8rem; margin-top:3px;">Reject</button>
+                    <button onclick="updateGuestStatus('${g.guest_id}', 'Approved')" class="btn-secondary" style="padding:5px 10px; font-size:0.8rem;">Approve</button>
+                    <button onclick="updateGuestStatus('${g.guest_id}', 'Rejected')" class="btn-danger" style="padding:5px 10px; font-size:0.8rem; margin-top:3px;">Reject</button>
                 </div>
             </div>`;
     });
@@ -234,7 +264,7 @@ async function updateGuestStatus(id, status) {
     loadAdminGuests();
 }
 
-// --- Super Admin Dashboard (Manajemen Full) ---
+// --- Super Admin Functions ---
 async function saveWebConfiguration() {
     const ptName = document.getElementById('config-pt-name').value.trim();
     const logoFile = document.getElementById('config-logo').files[0];
@@ -259,19 +289,20 @@ async function saveWebConfiguration() {
         }; r.readAsDataURL(wallFile);
     }
     if (!supabaseClient) localStorage.setItem('web_settings', JSON.stringify(s));
-    alert('Konfigurasi web disimpan!'); setTimeout(loadWebSettings, 500);
+    alert('Konfigurasi berhasil disimpan!'); setTimeout(loadWebSettings, 500);
 }
 
 async function resetAllConfigurations() {
-    if (confirm('Yakin reset seluruh konfigurasi web (PT, Logo, Wallpaper)?')) {
+    if (confirm('Yakin ingin mereset seluruh konfigurasi web (PT, Logo, Wallpaper)?')) {
         if (supabaseClient) {
             await supabaseClient.from('web_settings').upsert([
                 { setting_key: 'company_name', setting_value: 'PT Solusi Teknologi Indonesia' },
-                { setting_key: 'logo_url', setting_value: '' }, { setting_key: 'wallpaper_url', setting_value: '' }
+                { setting_key: 'logo_url', setting_value: '' },
+                { setting_key: 'wallpaper_url', setting_value: '' }
             ]);
         } else { localStorage.removeItem('web_settings'); }
         document.getElementById('app-logo').style.display = 'none'; document.body.style.backgroundImage = 'none';
-        loadWebSettings(); alert('Konfigurasi direset.');
+        loadWebSettings(); alert('Semua konfigurasi web berhasil direset!');
     }
 }
 
@@ -286,11 +317,11 @@ async function addApproveUser() {
         if (error) return alert('Gagal: ' + error.message);
     } else {
         let users = JSON.parse(localStorage.getItem('users') || '[]');
-        if (users.find(x => x.username === u)) return alert('Username sudah ada!');
+        if (users.find(x => x.username === u)) return alert('Username sudah terdaftar!');
         users.push({ username: u, password: p, role: 'admin' }); localStorage.setItem('users', JSON.stringify(users));
     }
     document.getElementById('new-admin-username').value = ''; document.getElementById('new-admin-password').value = '';
-    loadManageUsers(); alert('User Admin ditambahkan!');
+    loadManageUsers(); alert('User Admin (Approve) berhasil ditambahkan!');
 }
 
 async function loadManageUsers() {
@@ -302,7 +333,7 @@ async function loadManageUsers() {
     }
     const c = document.getElementById('users-manage-list'); c.innerHTML = '';
     users.forEach(u => {
-        c.innerHTML += `<div class="item-row"><span>${u.username}</span><button onclick="deleteUser('${u.username}')" class="btn-danger" style="width:auto; padding:3px 8px;">Hapus</button></div>`;
+        c.innerHTML += `<div class="item-row"><span>User: <b>${u.username}</b></span><button onclick="deleteUser('${u.username}')" class="btn-danger" style="width:auto; padding:3px 8px; font-size:0.8rem;">Hapus Akses</button></div>`;
     });
 }
 
@@ -316,7 +347,7 @@ async function deleteUser(username) {
     }
 }
 
-// Manajemen Data Tamu (Delete History)
+// Manajemen History Tamu
 async function loadSuperAdminGuests() {
     let guests = [];
     if (supabaseClient) { const { data } = await supabaseClient.from('guests').select('*'); guests = data || []; }
@@ -325,12 +356,12 @@ async function loadSuperAdminGuests() {
     const c = document.getElementById('superadmin-guest-container'); c.innerHTML = '';
     guests.forEach(g => {
         c.innerHTML += `<div class="item-row"><div><strong>${g.guest_id}</strong> - ${g.fullname} (${g.status})</div>
-        <button onclick="deleteGuest('${g.guest_id}')" class="btn-danger" style="width:auto; padding:3px 8px;">Hapus</button></div>`;
+        <button onclick="deleteGuest('${g.guest_id}')" class="btn-danger" style="width:auto; padding:3px 8px; font-size:0.8rem;">Hapus Record</button></div>`;
     });
 }
 
 async function deleteGuest(id) {
-    if (confirm(`Hapus permanen tamu ${id}?`)) {
+    if (confirm(`Hapus permanen data tamu ${id}?`)) {
         if (supabaseClient) await supabaseClient.from('guests').delete().eq('guest_id', id);
         else {
             let g = JSON.parse(localStorage.getItem('guests') || '[]'); g = g.filter(x => x.guest_id !== id); localStorage.setItem('guests', JSON.stringify(g));
@@ -339,20 +370,22 @@ async function deleteGuest(id) {
     }
 }
 
-// Tambah/Hapus PT & ID
+// Manajemen PT & Jenis ID
 async function addApprovedCompany() {
     const c = document.getElementById('new-approved-company').value.trim(); if (!c) return;
     if (supabaseClient) await supabaseClient.from('approved_companies').insert([{ company_name: c }]);
     else { let arr = JSON.parse(localStorage.getItem('approved_companies') || '[]'); arr.push(c); localStorage.setItem('approved_companies', JSON.stringify(arr)); }
     loadManageApprovedCompanies(); loadDropdownData(); document.getElementById('new-approved-company').value = '';
 }
+
 async function loadManageApprovedCompanies() {
     let comps = [];
     if (supabaseClient) { const { data } = await supabaseClient.from('approved_companies').select('*'); comps = data || []; }
     else { let arr = JSON.parse(localStorage.getItem('approved_companies') || '[]'); comps = arr.map(c => ({ company_name: c })); }
     const container = document.getElementById('approved-companies-manage-list'); container.innerHTML = '';
-    comps.forEach(c => container.innerHTML += `<div class="item-row"><span>${c.company_name}</span><button onclick="deleteComp('${c.company_name}')" class="btn-danger" style="width:auto; padding:3px 8px;">Hapus</button></div>`);
+    comps.forEach(c => container.innerHTML += `<div class="item-row"><span>${c.company_name}</span><button onclick="deleteComp('${c.company_name}')" class="btn-danger" style="width:auto; padding:3px 8px; font-size:0.8rem;">Hapus</button></div>`);
 }
+
 async function deleteComp(name) {
     if (supabaseClient) await supabaseClient.from('approved_companies').delete().eq('company_name', name);
     else { let arr = JSON.parse(localStorage.getItem('approved_companies') || '[]'); arr = arr.filter(c => c !== name); localStorage.setItem('approved_companies', JSON.stringify(arr)); }
@@ -365,13 +398,15 @@ async function addIdType() {
     else { let arr = JSON.parse(localStorage.getItem('id_types') || '[]'); arr.push(t); localStorage.setItem('id_types', JSON.stringify(arr)); }
     loadManageIdTypes(); loadDropdownData(); document.getElementById('new-id-type').value = '';
 }
+
 async function loadManageIdTypes() {
     let types = [];
     if (supabaseClient) { const { data } = await supabaseClient.from('id_types').select('*'); types = data || []; }
     else { let arr = JSON.parse(localStorage.getItem('id_types') || '[]'); types = arr.map(t => ({ name: t })); }
     const container = document.getElementById('id-types-manage-list'); container.innerHTML = '';
-    types.forEach(t => container.innerHTML += `<div class="item-row"><span>${t.name}</span><button onclick="deleteId('${t.name}')" class="btn-danger" style="width:auto; padding:3px 8px;">Hapus</button></div>`);
+    types.forEach(t => container.innerHTML += `<div class="item-row"><span>${t.name}</span><button onclick="deleteId('${t.name}')" class="btn-danger" style="width:auto; padding:3px 8px; font-size:0.8rem;">Hapus</button></div>`);
 }
+
 async function deleteId(name) {
     if (supabaseClient) await supabaseClient.from('id_types').delete().eq('name', name);
     else { let arr = JSON.parse(localStorage.getItem('id_types') || '[]'); arr = arr.filter(t => t !== name); localStorage.setItem('id_types', JSON.stringify(arr)); }
